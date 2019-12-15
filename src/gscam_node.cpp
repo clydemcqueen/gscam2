@@ -1,17 +1,62 @@
 #include "gscam/gscam_node.hpp"
 
+extern "C" {
+#include "gst/gst.h"
+#include "gst/app/gstappsink.h"
+}
+
 #include "rclcpp/rclcpp.hpp"
+#include "sensor_msgs/msg/compressed_image.hpp"
+#include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/image_encodings.hpp"
 
-namespace gscam {
+namespace gscam
+{
 
-  GSCamNode::GSCamNode():
+  struct GSCamNode::impl
+  {
+    // General gstreamer configuration
+    std::string gsconfig_;
+
+    // Gstreamer structures
+    GstElement *pipeline_;
+    GstElement *sink_;
+
+    // Appsink configuration
+    bool sync_sink_;
+    bool preroll_;
+    bool use_gst_timestamps_;
+
+    // Camera publisher configuration
+    std::string frame_id_;
+    int width_, height_;
+    std::string image_encoding_;
+    std::string camera_name_;
+    std::string camera_info_url_;
+
+    // ROS Interface
+    // Calibration between ros::Time and gst timestamps
+    double time_offset_;
+    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr camera_pub_;
+    // Case of a jpeg only publisher
+    rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr jpeg_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr cinfo_pub_;
+
+  public:
+    impl() :
+      gsconfig_(""),
+      pipeline_(NULL),
+      sink_(NULL)
+    {
+    }
+
+  };
+
+  GSCamNode::GSCamNode() :
     rclcpp::Node("gscam_publisher"),
-    gsconfig_(""),
-    pipeline_(NULL),
-    sink_(NULL),
     camera_info_manager_(this)
   {
+    pImpl = std::make_unique<GSCamNode::impl>();
   }
 
   GSCamNode::~GSCamNode()
@@ -51,44 +96,45 @@ namespace gscam {
                    "Both GSCAM_CONFIG environment variable and 'gscam_config' rosparam are set. Please only define one.");
       return false;
     } else if (gsconfig_env) {
-      gsconfig_ = gsconfig_env;
+      pImpl->gsconfig_ = gsconfig_env;
       RCLCPP_INFO(get_logger(), "Using gstreamer config from env: %s", gsconfig_env);
     } else if (gsconfig_rosparam_defined) {
-      gsconfig_ = gsconfig_rosparam;
+      pImpl->gsconfig_ = gsconfig_rosparam;
       RCLCPP_INFO(get_logger(), "Using gstreamer config from rosparam: %s", gsconfig_rosparam.c_str());
     }
 
     // Get additional gscam configuration
-    get_parameter("sync_sink", sync_sink_);
-    get_parameter("preroll", preroll_);
-    get_parameter("use_gst_timestamps", use_gst_timestamps_);
+    get_parameter("sync_sink", pImpl->sync_sink_);
+    get_parameter("preroll", pImpl->preroll_);
+    get_parameter("use_gst_timestamps", pImpl->use_gst_timestamps_);
 
     // Get the camera parameters file
-    get_parameter("camera_info_url", camera_info_url_);
-    get_parameter("camera_name", camera_name_);
+    get_parameter("camera_info_url", pImpl->camera_info_url_);
+    get_parameter("camera_name", pImpl->camera_name_);
 
     // Get the image encoding
-    get_parameter("image_encoding", image_encoding_);
-    if (image_encoding_ != sensor_msgs::image_encodings::RGB8 &&
-        image_encoding_ != sensor_msgs::image_encodings::MONO8 &&
-        image_encoding_ != "jpeg") {
-      RCLCPP_FATAL(get_logger(), "Unsupported image encoding: %s", image_encoding_.c_str());
+    get_parameter("image_encoding", pImpl->image_encoding_);
+    if (pImpl->image_encoding_ != sensor_msgs::image_encodings::RGB8 &&
+        pImpl->image_encoding_ != sensor_msgs::image_encodings::MONO8 &&
+        pImpl->image_encoding_ != "jpeg") {
+      RCLCPP_FATAL(get_logger(), "Unsupported image encoding: %s", pImpl->image_encoding_.c_str());
     }
 
-    camera_info_manager_.setCameraName(camera_name_);
+    camera_info_manager_.setCameraName(pImpl->camera_name_);
 
-    if (camera_info_manager_.validateURL(camera_info_url_)) {
-      camera_info_manager_.loadCameraInfo(camera_info_url_);
-      RCLCPP_INFO(get_logger(), "Loaded camera calibration from %s", camera_info_url_.c_str());
+    if (camera_info_manager_.validateURL(pImpl->camera_info_url_)) {
+      camera_info_manager_.loadCameraInfo(pImpl->camera_info_url_);
+      RCLCPP_INFO(get_logger(), "Loaded camera calibration from %s", pImpl->camera_info_url_.c_str());
     } else {
-      RCLCPP_WARN(get_logger(), "Camera info at: %s not found. Using an uncalibrated config.", camera_info_url_.c_str());
+      RCLCPP_WARN(get_logger(), "Camera info at: %s not found. Using an uncalibrated config.",
+                  pImpl->camera_info_url_.c_str());
     }
 
     // Get TF Frame
-    if (!get_parameter("frame_id", frame_id_)) {
-      frame_id_ = "/camera_frame";
-      RCLCPP_WARN(get_logger(), "No camera frame_id set, using frame %s", frame_id_.c_str());
-      rclcpp::Parameter frame_id_param{"frame_id", frame_id_};
+    if (!get_parameter("frame_id", pImpl->frame_id_)) {
+      pImpl->frame_id_ = "/camera_frame";
+      RCLCPP_WARN(get_logger(), "No camera frame_id set, using frame %s", pImpl->frame_id_.c_str());
+      rclcpp::Parameter frame_id_param{"frame_id", pImpl->frame_id_};
       set_parameter(frame_id_param);
     }
 
@@ -107,74 +153,75 @@ namespace gscam {
 
     GError *error = 0; // Assignment to zero is a gst requirement
 
-    pipeline_ = gst_parse_launch(gsconfig_.c_str(), &error);
-    if (pipeline_ == NULL) {
+    pImpl->pipeline_ = gst_parse_launch(pImpl->gsconfig_.c_str(), &error);
+    if (pImpl->pipeline_ == NULL) {
       RCLCPP_FATAL(get_logger(), error->message);
       return false;
     }
 
     // Create RGB sink
-    sink_ = gst_element_factory_make("appsink", NULL);
-    GstCaps *caps = gst_app_sink_get_caps(GST_APP_SINK(sink_));
+    pImpl->sink_ = gst_element_factory_make("appsink", NULL);
+    GstCaps *caps = gst_app_sink_get_caps(GST_APP_SINK(pImpl->sink_));
 
     // http://gstreamer.freedesktop.org/data/doc/gstreamer/head/pwg/html/section-types-definitions.html
-    if (image_encoding_ == sensor_msgs::image_encodings::RGB8) {
+    if (pImpl->image_encoding_ == sensor_msgs::image_encodings::RGB8) {
       caps = gst_caps_new_simple("video/x-raw",
                                  "format", G_TYPE_STRING, "RGB",
                                  NULL);
-    } else if (image_encoding_ == sensor_msgs::image_encodings::MONO8) {
+    } else if (pImpl->image_encoding_ == sensor_msgs::image_encodings::MONO8) {
       caps = gst_caps_new_simple("video/x-raw",
                                  "format", G_TYPE_STRING, "GRAY8",
                                  NULL);
-    } else if (image_encoding_ == "jpeg") {
+    } else if (pImpl->image_encoding_ == "jpeg") {
       caps = gst_caps_new_simple("image/jpeg", NULL, NULL);
     }
 
-    gst_app_sink_set_caps(GST_APP_SINK(sink_), caps);
+    gst_app_sink_set_caps(GST_APP_SINK(pImpl->sink_), caps);
     gst_caps_unref(caps);
 
     // Set whether the sink should sync
     // Sometimes setting this to true can cause a large number of frames to be
     // dropped
     gst_base_sink_set_sync(
-      GST_BASE_SINK(sink_),
-      (sync_sink_) ? TRUE : FALSE);
+      GST_BASE_SINK(pImpl->sink_),
+      (pImpl->sync_sink_) ? TRUE : FALSE);
 
-    if (GST_IS_PIPELINE(pipeline_)) {
-      GstPad *outpad = gst_bin_find_unlinked_pad(GST_BIN(pipeline_), GST_PAD_SRC);
+    if (GST_IS_PIPELINE(pImpl->pipeline_)) {
+      GstPad *outpad = gst_bin_find_unlinked_pad(GST_BIN(pImpl->pipeline_), GST_PAD_SRC);
       g_assert(outpad);
 
       GstElement *outelement = gst_pad_get_parent_element(outpad);
       g_assert(outelement);
       gst_object_unref(outpad);
 
-      if (!gst_bin_add(GST_BIN(pipeline_), sink_)) {
+      if (!gst_bin_add(GST_BIN(pImpl->pipeline_), pImpl->sink_)) {
         RCLCPP_FATAL(get_logger(), "gst_bin_add() failed");
         gst_object_unref(outelement);
-        gst_object_unref(pipeline_);
+        gst_object_unref(pImpl->pipeline_);
         return false;
       }
 
-      if (!gst_element_link(outelement, sink_)) {
-        RCLCPP_FATAL(get_logger(), "GStreamer: cannot link outelement(\"%s\") -> sink\n", gst_element_get_name(outelement));
+      if (!gst_element_link(outelement, pImpl->sink_)) {
+        RCLCPP_FATAL(get_logger(), "GStreamer: cannot link outelement(\"%s\") -> sink\n",
+                     gst_element_get_name(outelement));
         gst_object_unref(outelement);
-        gst_object_unref(pipeline_);
+        gst_object_unref(pImpl->pipeline_);
         return false;
       }
 
       gst_object_unref(outelement);
     } else {
-      GstElement *launchpipe = pipeline_;
-      pipeline_ = gst_pipeline_new(NULL);
-      g_assert(pipeline_);
+      GstElement *launchpipe = pImpl->pipeline_;
+      pImpl->pipeline_ = gst_pipeline_new(NULL);
+      g_assert(pImpl->pipeline_);
 
       gst_object_unparent(GST_OBJECT(launchpipe));
 
-      gst_bin_add_many(GST_BIN(pipeline_), launchpipe, sink_, NULL);
+      gst_bin_add_many(GST_BIN(pImpl->pipeline_), launchpipe, pImpl->sink_, NULL);
 
-      if (!gst_element_link(launchpipe, sink_)) {
+      if (!gst_element_link(launchpipe, pImpl->sink_)) {
         RCLCPP_FATAL(get_logger(), "GStreamer: cannot link launchpipe -> sink");
-        gst_object_unref(pipeline_);
+        gst_object_unref(pImpl->pipeline_);
         return false;
       }
     }
@@ -183,43 +230,43 @@ namespace gscam {
     GstClock *clock = gst_system_clock_obtain();
     GstClockTime ct = gst_clock_get_time(clock);
     gst_object_unref(clock);
-    time_offset_ = now().seconds() - GST_TIME_AS_USECONDS(ct) / 1e6;
-    RCLCPP_INFO(get_logger(), "Time offset: %.3f", time_offset_);
+    pImpl->time_offset_ = now().seconds() - GST_TIME_AS_USECONDS(ct) / 1e6;
+    RCLCPP_INFO(get_logger(), "Time offset: %.3f", pImpl->time_offset_);
 
-    gst_element_set_state(pipeline_, GST_STATE_PAUSED);
+    gst_element_set_state(pImpl->pipeline_, GST_STATE_PAUSED);
 
-    if (gst_element_get_state(pipeline_, NULL, NULL, -1) == GST_STATE_CHANGE_FAILURE) {
+    if (gst_element_get_state(pImpl->pipeline_, NULL, NULL, -1) == GST_STATE_CHANGE_FAILURE) {
       RCLCPP_FATAL(get_logger(), "Failed to PAUSE stream, check your gstreamer configuration.");
       return false;
     } else {
       RCLCPP_DEBUG(get_logger(), "Stream is PAUSED.");
     }
 
-    cinfo_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("camera/camera_info", 1);
-    if (image_encoding_ == "jpeg") {
-      jpeg_pub_ = create_publisher<sensor_msgs::msg::CompressedImage>("camera/image_raw/compressed", 1);
+    pImpl->cinfo_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("camera/camera_info", 1);
+    if (pImpl->image_encoding_ == "jpeg") {
+      pImpl->jpeg_pub_ = create_publisher<sensor_msgs::msg::CompressedImage>("camera/image_raw/compressed", 1);
     } else {
-      camera_pub_ = create_publisher<sensor_msgs::msg::Image>("camera/image_raw", 1);
+      pImpl->camera_pub_ = create_publisher<sensor_msgs::msg::Image>("camera/image_raw", 1);
     }
 
     RCLCPP_INFO(get_logger(), "Publishing stream...");
 
     // Pre-roll camera if needed
-    if (preroll_) {
+    if (pImpl->preroll_) {
       RCLCPP_DEBUG(get_logger(), "Performing preroll...");
 
       // The PAUSE, PLAY, PAUSE, PLAY cycle is to ensure proper pre-roll
       // I am told this is needed and am erring on the side of caution.
-      gst_element_set_state(pipeline_, GST_STATE_PLAYING);
-      if (gst_element_get_state(pipeline_, NULL, NULL, -1) == GST_STATE_CHANGE_FAILURE) {
+      gst_element_set_state(pImpl->pipeline_, GST_STATE_PLAYING);
+      if (gst_element_get_state(pImpl->pipeline_, NULL, NULL, -1) == GST_STATE_CHANGE_FAILURE) {
         RCLCPP_ERROR(get_logger(), "Failed to PLAY during preroll.");
         return false;
       } else {
         RCLCPP_DEBUG(get_logger(), "Stream is PLAYING in preroll.");
       }
 
-      gst_element_set_state(pipeline_, GST_STATE_PAUSED);
-      if (gst_element_get_state(pipeline_, NULL, NULL, -1) == GST_STATE_CHANGE_FAILURE) {
+      gst_element_set_state(pImpl->pipeline_, GST_STATE_PAUSED);
+      if (gst_element_get_state(pImpl->pipeline_, NULL, NULL, -1) == GST_STATE_CHANGE_FAILURE) {
         RCLCPP_ERROR(get_logger(), "Failed to PAUSE.");
         return false;
       } else {
@@ -227,7 +274,7 @@ namespace gscam {
       }
     }
 
-    if (gst_element_set_state(pipeline_, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
+    if (gst_element_set_state(pImpl->pipeline_, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
       RCLCPP_ERROR(get_logger(), "Could not start stream!");
       return false;
     }
@@ -241,7 +288,7 @@ namespace gscam {
     // This should block until a new frame is awake, this way, we'll run at the
     // actual capture framerate of the device.
     // RCLCPP_DEBUG(get_logger(), "Getting data...");
-    GstSample *sample = gst_app_sink_pull_sample(GST_APP_SINK(sink_));
+    GstSample *sample = gst_app_sink_pull_sample(GST_APP_SINK(pImpl->sink_));
     if (!sample) {
       RCLCPP_ERROR(get_logger(), "Could not get gstreamer sample.");
       return;
@@ -253,7 +300,7 @@ namespace gscam {
     gst_memory_map(memory, &info, GST_MAP_READ);
     gsize &buf_size = info.size;
     guint8 *&buf_data = info.data;
-    GstClockTime bt = gst_element_get_base_time(pipeline_);
+    GstClockTime bt = gst_element_get_base_time(pImpl->pipeline_);
     // RCLCPP_INFO(get_logger(), "New buffer: timestamp %.6f %lu %lu %.3f",
     //         GST_TIME_AS_USECONDS(buf->timestamp+bt)/1e6+time_offset_, buf->timestamp, bt, time_offset_);
 
@@ -266,36 +313,36 @@ namespace gscam {
     // RCLCPP_DEBUG(get_logger(), "Got data.");
 
     // Get the image width and height
-    GstPad *pad = gst_element_get_static_pad(sink_, "sink");
+    GstPad *pad = gst_element_get_static_pad(pImpl->sink_, "sink");
     const GstCaps *caps = gst_pad_get_current_caps(pad);
     GstStructure *structure = gst_caps_get_structure(caps, 0);
-    gst_structure_get_int(structure, "width", &width_);
-    gst_structure_get_int(structure, "height", &height_);
+    gst_structure_get_int(structure, "width", &pImpl->width_);
+    gst_structure_get_int(structure, "height", &pImpl->height_);
 
     // Update header information
     camera_info_manager::CameraInfo cur_cinfo = camera_info_manager_.getCameraInfo();
     auto cinfo = std::make_unique<sensor_msgs::msg::CameraInfo>(cur_cinfo);
-    if (use_gst_timestamps_) {
-      cinfo->header.stamp = rclcpp::Time(GST_TIME_AS_USECONDS(buf->pts + bt) / 1e6 + time_offset_);
+    if (pImpl->use_gst_timestamps_) {
+      cinfo->header.stamp = rclcpp::Time(GST_TIME_AS_USECONDS(buf->pts + bt) / 1e6 + pImpl->time_offset_);
     } else {
       cinfo->header.stamp = now();
     }
     // RCLCPP_INFO(get_logger(), "Image time stamp: %.3f",cinfo->header.stamp.toSec());
-    cinfo->header.frame_id = frame_id_;
-    if (image_encoding_ == "jpeg") {
+    cinfo->header.frame_id = pImpl->frame_id_;
+    if (pImpl->image_encoding_ == "jpeg") {
       auto img = std::make_unique<sensor_msgs::msg::CompressedImage>();
       img->header = cinfo->header;
       img->format = "jpeg";
       img->data.resize(buf_size);
       std::copy(buf_data, (buf_data) + (buf_size), img->data.begin());
-      jpeg_pub_->publish(std::move(img));
-      cinfo_pub_->publish(std::move(cinfo));
+      pImpl->jpeg_pub_->publish(std::move(img));
+      pImpl->cinfo_pub_->publish(std::move(cinfo));
     } else {
       // Complain if the returned buffer is smaller than we expect
       const unsigned int expected_frame_size =
-        image_encoding_ == sensor_msgs::image_encodings::RGB8
-        ? width_ * height_ * 3
-        : width_ * height_;
+        pImpl->image_encoding_ == sensor_msgs::image_encodings::RGB8
+        ? pImpl->width_ * pImpl->height_ * 3
+        : pImpl->width_ * pImpl->height_;
 
       if (buf_size < expected_frame_size) {
         RCLCPP_WARN(get_logger(), "GStreamer image buffer underflow: Expected frame to be %d bytes but got only %d"
@@ -308,19 +355,19 @@ namespace gscam {
       img->header = cinfo->header;
 
       // Image data and metadata
-      img->width = width_;
-      img->height = height_;
-      img->encoding = image_encoding_;
+      img->width = pImpl->width_;
+      img->height = pImpl->height_;
+      img->encoding = pImpl->image_encoding_;
       img->is_bigendian = false;
       img->data.resize(expected_frame_size);
 
       // Copy only the data we received
       // Since we're publishing shared pointers, we need to copy the image so
       // we can free the buffer allocated by gstreamer
-      if (image_encoding_ == sensor_msgs::image_encodings::RGB8) {
-        img->step = width_ * 3;
+      if (pImpl->image_encoding_ == sensor_msgs::image_encodings::RGB8) {
+        img->step = pImpl->width_ * 3;
       } else {
-        img->step = width_;
+        img->step = pImpl->width_;
       }
       std::copy(
         buf_data,
@@ -328,8 +375,8 @@ namespace gscam {
         img->data.begin());
 
       // Publish the image/info
-      camera_pub_->publish(std::move(img));
-      cinfo_pub_->publish(std::move(cinfo));
+      pImpl->camera_pub_->publish(std::move(img));
+      pImpl->cinfo_pub_->publish(std::move(cinfo));
     }
 
     // Release the buffer
@@ -342,10 +389,10 @@ namespace gscam {
   {
     // Clean up
     RCLCPP_INFO(get_logger(), "Stopping gstreamer pipeline...");
-    if (pipeline_) {
-      gst_element_set_state(pipeline_, GST_STATE_NULL);
-      gst_object_unref(pipeline_);
-      pipeline_ = NULL;
+    if (pImpl->pipeline_) {
+      gst_element_set_state(pImpl->pipeline_, GST_STATE_NULL);
+      gst_object_unref(pImpl->pipeline_);
+      pImpl->pipeline_ = NULL;
     }
   }
 

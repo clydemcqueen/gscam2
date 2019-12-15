@@ -94,4 +94,10 @@ install(
   DESTINATION lib/${PROJECT_NAME}
 )
 
+# Export include directory
+ament_export_include_directories(include)
+
+# Install include directory
+install(DIRECTORY include/${PROJECT_NAME} DESTINATION include)
+
 ament_package()
