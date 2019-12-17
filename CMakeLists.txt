@@ -12,18 +12,26 @@ if (NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif ()
 
+# Emulate Colcon in CLion
+if ($ENV{CLION_IDE})
+  message(STATUS "Running inside CLion")
+  set(ros2_shared_DIR "${PROJECT_SOURCE_DIR}/../../../install/ros2_shared/share/ros2_shared/cmake")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRUN_INSIDE_CLION")
+endif ()
+
 # Gstreamer doesn't provide CMake files
 find_package(PkgConfig)
 pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
 pkg_check_modules(GST_APP REQUIRED gstreamer-app-1.0)
 
 find_package(ament_cmake REQUIRED)
+find_package(camera_calibration_parsers REQUIRED)
+find_package(camera_info_manager REQUIRED)
 find_package(class_loader REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(ros2_shared REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(camera_calibration_parsers REQUIRED)
-find_package(camera_info_manager REQUIRED)
 
 include_directories(include)
 
@@ -43,6 +51,7 @@ set(GSCAM_NODE_DEPS
   class_loader
   GST_APP
   rclcpp
+  ros2_shared
   sensor_msgs)
 
 add_library(gscam_node SHARED

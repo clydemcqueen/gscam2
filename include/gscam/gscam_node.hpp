@@ -1,30 +1,24 @@
 #ifndef __GSCAM_GSCAM_H
 #define __GSCAM_GSCAM_H
 
-#include "camera_info_manager/camera_info_manager.h"
+#include "rclcpp/rclcpp.hpp"
 
 namespace gscam
 {
 
   class GSCamNode : public rclcpp::Node
   {
+    // Hide implementation
     struct impl;
-    std::unique_ptr<impl> pImpl;
+    std::unique_ptr<impl> pImpl_;
 
-    camera_info_manager::CameraInfoManager camera_info_manager_;
+    void validate_parameters();
 
   public:
-    GSCamNode();
+
+    GSCamNode(const rclcpp::NodeOptions &options);
 
     ~GSCamNode();
-
-    bool configure();
-
-    bool init_stream();
-
-    void cleanup_stream();
-
-    void spin_once();
   };
 
 }
