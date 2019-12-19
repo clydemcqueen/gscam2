@@ -200,11 +200,11 @@ namespace gscam
       RCLCPP_INFO(node_->get_logger(), "Stream is paused");
     }
 
-    cinfo_pub_ = node_->create_publisher<sensor_msgs::msg::CameraInfo>("camera/camera_info", 1);
+    cinfo_pub_ = node_->create_publisher<sensor_msgs::msg::CameraInfo>("camera_info", 1);
     if (cxt_.image_encoding_ == "jpeg") {
-      jpeg_pub_ = node_->create_publisher<sensor_msgs::msg::CompressedImage>("camera/image_raw/compressed", 1);
+      jpeg_pub_ = node_->create_publisher<sensor_msgs::msg::CompressedImage>("image_raw/compressed", 1);
     } else {
-      camera_pub_ = node_->create_publisher<sensor_msgs::msg::Image>("camera/image_raw", 1);
+      camera_pub_ = node_->create_publisher<sensor_msgs::msg::Image>("image_raw", 1);
     }
 
     // Pre-roll camera if needed
@@ -339,6 +339,12 @@ namespace gscam
         (buf_data) + (buf_size),
         img->data.begin());
 
+#undef SHOW_ADDRESS
+#ifdef SHOW_ADDRESS
+      static int count = 0;
+      RCLCPP_INFO(node_->get_logger(), "%d, %p", count++, reinterpret_cast<std::uintptr_t>(img.get()));
+#endif
+
       // Publish the image/info
       camera_pub_->publish(std::move(img));
       cinfo_pub_->publish(std::move(cinfo));
@@ -418,6 +424,8 @@ namespace gscam
     rclcpp::Node("gscam_publisher", options),
     pImpl_(std::make_unique<GSCamNode::impl>(this))
   {
+    RCLCPP_INFO(get_logger(), "use_intra_process_comms=%d", options.use_intra_process_comms());
+
     // Declare and get parameters, this will call validate_parameters()
 #undef CXT_MACRO_MEMBER
 #define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_LOAD_PARAMETER((*this), pImpl_->cxt_, n, t, d)

@@ -30,6 +30,7 @@ find_package(camera_info_manager REQUIRED)
 find_package(class_loader REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(rclpy REQUIRED)
 find_package(ros2_shared REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
@@ -67,6 +68,30 @@ rclcpp_components_register_nodes(gscam_node "gscam::GSCamNode")
 set(node_plugins "${node_plugins}gscam::GSCamNode;$<TARGET_FILE:gscam_node>\n")
 
 #=============
+# Test subscriber node
+#=============
+
+set(SUBSCRIBER_NODE_SOURCES
+  src/subscriber_node.cpp)
+
+set(SUBSCRIBER_NODE_DEPS
+  class_loader
+  rclcpp
+  sensor_msgs)
+
+add_library(subscriber_node SHARED
+  ${SUBSCRIBER_NODE_SOURCES})
+
+target_compile_definitions(subscriber_node
+  PRIVATE "COMPOSITION_BUILDING_DLL")
+
+ament_target_dependencies(subscriber_node
+  ${SUBSCRIBER_NODE_DEPS})
+
+rclcpp_components_register_nodes(subscriber_node "gscam::ImageSubscriberNode")
+set(node_plugins "${node_plugins}gscam::ImageSubscriberNode;$<TARGET_FILE:subscriber_node>\n")
+
+#=============
 # Export incantations, see https://github.com/ros2/demos/blob/master/composition/CMakeLists.txt
 #=============
 
@@ -91,7 +116,7 @@ ament_target_dependencies(gscam_main
 
 # Install nodes
 install(
-  TARGETS gscam_node
+  TARGETS gscam_node subscriber_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -108,5 +133,8 @@ ament_export_include_directories(include)
 
 # Install include directory
 install(DIRECTORY include/${PROJECT_NAME} DESTINATION include)
+
+# Install launch directory
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 
 ament_package()
