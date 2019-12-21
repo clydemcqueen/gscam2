@@ -92,14 +92,6 @@ rclcpp_components_register_nodes(subscriber_node "gscam::ImageSubscriberNode")
 set(node_plugins "${node_plugins}gscam::ImageSubscriberNode;$<TARGET_FILE:subscriber_node>\n")
 
 #=============
-# Export incantations, see https://github.com/ros2/demos/blob/master/composition/CMakeLists.txt
-#=============
-
-if (NOT WIN32)
-  ament_environment_hooks("${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}")
-endif ()
-
-#=============
 # GSCam main, statically linked to make IDE debugging easier
 #=============
 
@@ -111,30 +103,45 @@ ament_target_dependencies(gscam_main
   ${GSCAM_NODE_DEPS})
 
 #=============
+# Export
+# Best practice, see https://discourse.ros.org/t/ament-best-practice-for-sharing-libraries/3602
+#=============
+
+ament_export_dependencies(class_loader)
+
+ament_export_include_directories(include)
+
+ament_export_interfaces(export_gscam_node export_subscriber_node)
+
+ament_export_libraries(gscam_node subscriber_node)
+
+ament_package()
+
+#=============
 # Install
 #=============
 
-# Install nodes
+install(DIRECTORY include/${PROJECT_NAME} DESTINATION include)
+
 install(
-  TARGETS gscam_node subscriber_node
+  TARGETS gscam_node
+  EXPORT export_gscam_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
 
-# Install executables
+install(
+  TARGETS subscriber_node
+  EXPORT export_subscriber_node
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
 install(
   TARGETS gscam_main
   DESTINATION lib/${PROJECT_NAME}
 )
 
-# Export include directory
-ament_export_include_directories(include)
-
-# Install include directory
-install(DIRECTORY include/${PROJECT_NAME} DESTINATION include)
-
-# Install launch directory
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
-
-ament_package()
