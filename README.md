@@ -27,3 +27,20 @@ source /opt/ros/eloquent/setup.bash
 colcon build
 source install/local_setup.bash
 ~~~
+
+## Available Parameters
+Format: `param name` type - description (default)
+
+- `gscam_config` string - with the stream config
+- `sync_sink` bool - sync wiht the clock (true)
+- `preroll` bool - prefill buffers (false)
+- `use_gst_timestamps` bool - Use gst time instead of ROS time (false)
+- `image_encoding`, string - encoding type (`sensor_msgs::image_encodings::RGB8`)
+- `camera_info_url`, string - Location of camera info file
+- `camera_name` string - Camera name 
+- `frame_id` string - Camera frame id (camera_frame)
+
+## Publishers
+- `camera_info`
+- `image_raw`
+- `image_raw/compressed` - only if image is encoded as a jpeg stream 
