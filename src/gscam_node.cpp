@@ -256,7 +256,9 @@ namespace gscam
     // RCLCPP_DEBUG(get_logger(), "Getting data...");
     GstSample *sample = gst_app_sink_pull_sample(GST_APP_SINK(sink_));
     if (!sample) {
-      RCLCPP_ERROR(node_->get_logger(), "Could not get sample");
+      RCLCPP_ERROR(node_->get_logger(), "Could not get sample, pause for 1s");
+      using namespace std::chrono_literals;
+      std::this_thread::sleep_for(1s);
       return;
     }
     GstBuffer *buf = gst_sample_get_buffer(sample);
@@ -272,7 +274,9 @@ namespace gscam
 
     // Stop on end of stream
     if (!buf) {
-      RCLCPP_INFO(node_->get_logger(), "Stream ended");
+      RCLCPP_INFO(node_->get_logger(), "Stream ended, pause for 1s");
+      using namespace std::chrono_literals;
+      std::this_thread::sleep_for(1s);
       return;
     }
 
