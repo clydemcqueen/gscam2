@@ -90,24 +90,40 @@ namespace gscam
     GSCamContext cxt_;
 
     // Constructor
-    impl(rclcpp::Node *node) :
+    explicit impl(rclcpp::Node *node) :
       node_(node),
       camera_info_manager_(node),
-      pipeline_(NULL),
-      sink_(NULL),
-      stop_signal_(false)
+      pipeline_(nullptr),
+      sink_(nullptr),
+      stop_signal_(false),
+      width_(0),
+      height_(0),
+      time_offset_(0)
     {
     }
 
+    // Destructor
+    ~impl()
+    {
+      if (pipeline_) {
+        // Stop thread
+        stop_signal_ = true;
+        pipeline_thread_.join();
+
+        // Delete pipeline
+        delete_pipeline();
+      }
+    }
+
     // Start or re-start pipeline
-    void reset();
+    void restart();
   };
 
   bool GSCamNode::impl::create_pipeline()
   {
     if (!gst_is_initialized()) {
       // Only need to do this once
-      gst_init(0, 0);
+      gst_init(nullptr, nullptr);
       RCLCPP_INFO(node_->get_logger(), "Gstreamer initialized");
     }
 
@@ -116,26 +132,26 @@ namespace gscam
     GError *error = 0; // Assignment to zero is a gst requirement
 
     pipeline_ = gst_parse_launch(cxt_.gscam_config_.c_str(), &error);
-    if (pipeline_ == NULL) {
+    if (!pipeline_) {
       RCLCPP_FATAL(node_->get_logger(), error->message);
       return false;
     }
 
     // Create RGB sink
-    sink_ = gst_element_factory_make("appsink", NULL);
+    sink_ = gst_element_factory_make("appsink", nullptr);
     GstCaps *caps = gst_app_sink_get_caps(GST_APP_SINK(sink_));
 
     // http://gstreamer.freedesktop.org/data/doc/gstreamer/head/pwg/html/section-types-definitions.html
     if (cxt_.image_encoding_ == sensor_msgs::image_encodings::RGB8) {
       caps = gst_caps_new_simple("video/x-raw",
                                  "format", G_TYPE_STRING, "RGB",
-                                 NULL);
+                                 nullptr);
     } else if (cxt_.image_encoding_ == sensor_msgs::image_encodings::MONO8) {
       caps = gst_caps_new_simple("video/x-raw",
                                  "format", G_TYPE_STRING, "GRAY8",
-                                 NULL);
+                                 nullptr);
     } else if (cxt_.image_encoding_ == "jpeg") {
-      caps = gst_caps_new_simple("image/jpeg", NULL, NULL);
+      caps = gst_caps_new_simple("image/jpeg", nullptr, nullptr);
     }
 
     gst_app_sink_set_caps(GST_APP_SINK(sink_), caps);
@@ -171,12 +187,12 @@ namespace gscam
       gst_object_unref(outelement);
     } else {
       GstElement *launchpipe = pipeline_;
-      pipeline_ = gst_pipeline_new(NULL);
+      pipeline_ = gst_pipeline_new(nullptr);
       g_assert(pipeline_);
 
       gst_object_unparent(GST_OBJECT(launchpipe));
 
-      gst_bin_add_many(GST_BIN(pipeline_), launchpipe, sink_, NULL);
+      gst_bin_add_many(GST_BIN(pipeline_), launchpipe, sink_, nullptr);
 
       if (!gst_element_link(launchpipe, sink_)) {
         RCLCPP_FATAL(node_->get_logger(), "Cannot link launchpipe -> sink");
@@ -193,7 +209,7 @@ namespace gscam
 
     gst_element_set_state(pipeline_, GST_STATE_PAUSED);
 
-    if (gst_element_get_state(pipeline_, NULL, NULL, -1) == GST_STATE_CHANGE_FAILURE) {
+    if (gst_element_get_state(pipeline_, nullptr, nullptr, -1) == GST_STATE_CHANGE_FAILURE) {
       RCLCPP_FATAL(node_->get_logger(), "Failed to pause stream, check gscam_config");
       return false;
     } else {
@@ -212,7 +228,7 @@ namespace gscam
       // The PAUSE, PLAY, PAUSE, PLAY cycle is to ensure proper pre-roll
       // I am told this is needed and am erring on the side of caution.
       gst_element_set_state(pipeline_, GST_STATE_PLAYING);
-      if (gst_element_get_state(pipeline_, NULL, NULL, -1) == GST_STATE_CHANGE_FAILURE) {
+      if (gst_element_get_state(pipeline_, nullptr, nullptr, -1) == GST_STATE_CHANGE_FAILURE) {
         RCLCPP_ERROR(node_->get_logger(), "Failed to play in preroll");
         return false;
       } else {
@@ -220,7 +236,7 @@ namespace gscam
       }
 
       gst_element_set_state(pipeline_, GST_STATE_PAUSED);
-      if (gst_element_get_state(pipeline_, NULL, NULL, -1) == GST_STATE_CHANGE_FAILURE) {
+      if (gst_element_get_state(pipeline_, nullptr, nullptr, -1) == GST_STATE_CHANGE_FAILURE) {
         RCLCPP_ERROR(node_->get_logger(), "failed to pause in preroll");
         return false;
       } else {
@@ -239,11 +255,11 @@ namespace gscam
 
   void GSCamNode::impl::delete_pipeline()
   {
-    // Stop runnin stream, or cleanup a stream that failed to fully start
+    // Stop a running stream, or cleanup a stream that failed to fully start
     if (pipeline_) {
       gst_element_set_state(pipeline_, GST_STATE_NULL);
       gst_object_unref(pipeline_);
-      pipeline_ = NULL;
+      pipeline_ = nullptr;
       RCLCPP_INFO(node_->get_logger(), "Pipeline deleted");
     }
   }
@@ -360,7 +376,7 @@ namespace gscam
     gst_buffer_unref(buf);
   }
 
-  void GSCamNode::impl::reset()
+  void GSCamNode::impl::restart()
   {
     if (pipeline_) {
       // Stop thread
@@ -443,7 +459,7 @@ namespace gscam
 
   GSCamNode::~GSCamNode()
   {
-    // TODO stop pImpl thread
+    pImpl_.reset();
   }
 
   void GSCamNode::validate_parameters()
@@ -452,7 +468,7 @@ namespace gscam
 #define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_LOG_PARAMETER(RCLCPP_INFO, get_logger(), pImpl_->cxt_, n, t, d)
     GSCAM_ALL_PARAMS
 
-    pImpl_->reset();
+    pImpl_->restart();
   }
 
 } // namespace gscam
