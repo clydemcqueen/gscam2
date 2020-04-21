@@ -1,6 +1,5 @@
 """
 Dynamically compose GSCamNode and ImageSubscriberNode in a component_container.
-
 Limitations of this container:
  -- stdout is not set to flush after each line, so the most recent log messages may be delayed
 """
