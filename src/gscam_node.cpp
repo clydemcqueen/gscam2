@@ -413,7 +413,7 @@ namespace gscam
       camera_info_manager_.loadCameraInfo(cxt_.camera_info_url_);
       RCLCPP_INFO(node_->get_logger(), "Loaded camera calibration from %s", cxt_.camera_info_url_.c_str());
     } else {
-      RCLCPP_WARN(node_->get_logger(), "Camera info at '%s' not found, using an uncalibrated config",
+      RCLCPP_ERROR(node_->get_logger(), "Camera info url '%s' is not valid, missing 'file://' prefix?",
                   cxt_.camera_info_url_.c_str());
     }
 
