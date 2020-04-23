@@ -103,6 +103,24 @@ ament_target_dependencies(gscam_main
   ${GSCAM_NODE_DEPS})
 
 #=============
+# Manual composition of camera and subscriber nodes, IPC=true
+#=============
+
+add_executable(
+  ipc_test_main
+  src/ipc_test_main.cpp
+)
+target_link_libraries(
+  ipc_test_main
+  gscam_node
+  subscriber_node
+)
+ament_target_dependencies(
+  ipc_test_main
+  rclcpp
+)
+
+#=============
 # Export
 # Best practice, see https://discourse.ros.org/t/ament-best-practice-for-sharing-libraries/3602
 #=============
@@ -140,7 +158,7 @@ install(
 )
 
 install(
-  TARGETS gscam_main
+  TARGETS gscam_main ipc_test_main
   DESTINATION lib/${PROJECT_NAME}
 )
 
