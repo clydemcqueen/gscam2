@@ -48,7 +48,7 @@ ros2 run gscam gscam_main --ros-args --remap /image_raw:=/my_camera/image_raw --
 ~~~
 ... where gscam_params.yaml is:
 ~~~
-/gscam_publisher:
+gscam_publisher:
   ros__parameters:
     gscam_config: 'v4l2src device=/dev/video1 do-timestamp=true ! queue ! video/x-h264,width=1920,height=1080,framerate=30/1 ! h264parse ! avdec_h264 ! videoconvert'
     preroll: True
