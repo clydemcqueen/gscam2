@@ -16,9 +16,9 @@ namespace gscam
 
   public:
 
-    GSCamNode(const rclcpp::NodeOptions &options);
+    explicit GSCamNode(const rclcpp::NodeOptions &options);
 
-    ~GSCamNode();
+    ~GSCamNode() override;
   };
 
 }

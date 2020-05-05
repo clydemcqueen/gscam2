@@ -14,7 +14,7 @@ namespace gscam
 
   public:
 
-    ImageSubscriberNode(const rclcpp::NodeOptions &options);
+    explicit ImageSubscriberNode(const rclcpp::NodeOptions &options);
   };
 
 } // namespace gscam

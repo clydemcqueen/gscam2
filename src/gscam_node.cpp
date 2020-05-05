@@ -64,7 +64,7 @@ namespace gscam
     int width_, height_;
 
     // Calibration between ros::Time and gst timestamps
-    double time_offset_;
+    int64_t time_offset_;
 
     // Publish images...
     rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr camera_pub_;
@@ -204,8 +204,8 @@ namespace gscam
     GstClock *clock = gst_system_clock_obtain();
     GstClockTime ct = gst_clock_get_time(clock);
     gst_object_unref(clock);
-    time_offset_ = node_->now().seconds() - GST_TIME_AS_USECONDS(ct) / 1e6;
-    RCLCPP_INFO(node_->get_logger(), "Time offset: %.3f", time_offset_);
+    time_offset_ = node_->now().nanoseconds() - ct;
+    RCLCPP_INFO(node_->get_logger(), "Time offset: %ld", time_offset_);
 
     gst_element_set_state(pipeline_, GST_STATE_PAUSED);
 
@@ -309,7 +309,7 @@ namespace gscam
     camera_info_manager::CameraInfo cur_cinfo = camera_info_manager_.getCameraInfo();
     auto cinfo = std::make_unique<sensor_msgs::msg::CameraInfo>(cur_cinfo);
     if (cxt_.use_gst_timestamps_) {
-      cinfo->header.stamp = rclcpp::Time(GST_TIME_AS_USECONDS(buf->pts + bt) / 1e6 + time_offset_);
+      cinfo->header.stamp = rclcpp::Time(buf->pts + bt + time_offset_);
     } else {
       cinfo->header.stamp = node_->now();
     }
