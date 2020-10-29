@@ -373,7 +373,7 @@ namespace gscam
     // Release the buffer
     gst_memory_unmap(memory, &info);
     gst_memory_unref(memory);
-    gst_buffer_unref(buf);
+    gst_sample_unref(sample);
   }
 
   void GSCamNode::impl::restart()
