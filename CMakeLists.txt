@@ -129,7 +129,7 @@ ament_export_dependencies(class_loader)
 
 ament_export_include_directories(include)
 
-ament_export_interfaces(export_gscam_node export_subscriber_node)
+ament_export_targets(export_gscam_node export_subscriber_node)
 
 ament_export_libraries(gscam_node subscriber_node)
 
