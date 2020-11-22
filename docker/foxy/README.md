@@ -3,7 +3,7 @@
 In terminal 1:
 ~~~
 docker build --tag gscam2:foxy .
-docker run gscam2:foxy
+docker run -it gscam2:foxy
 ~~~
 
 In terminal 2:

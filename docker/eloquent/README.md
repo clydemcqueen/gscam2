@@ -3,7 +3,7 @@
 In terminal 1:
 ~~~
 docker build --tag gscam2:eloquent .
-docker run gscam2:eloquent
+docker run -it gscam2:eloquent
 ~~~
 
 In terminal 2:
