@@ -5,7 +5,7 @@ extern "C" {
 #include "gst/app/gstappsink.h"
 }
 
-#include "camera_info_manager/camera_info_manager.h"
+#include "camera_info_manager/camera_info_manager.hpp"
 #include "ros2_shared/context_macros.hpp"
 #include "sensor_msgs/image_encodings.hpp"
 #include "sensor_msgs/msg/compressed_image.hpp"
@@ -34,7 +34,7 @@ namespace gscam
 
   struct GSCamContext
   {
-    GSCAM_ALL_PARAMS
+    CXT_MACRO_DEFINE_MEMBERS(GSCAM_ALL_PARAMS)
   };
 
   //=============================================================================
@@ -453,8 +453,8 @@ namespace gscam
 
     // Register parameters, if they change validate_parameters() will be called again
 #undef CXT_MACRO_MEMBER
-#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_PARAMETER_CHANGED(pImpl_->cxt_, n, t)
-    CXT_MACRO_REGISTER_PARAMETERS_CHANGED((*this), GSCAM_ALL_PARAMS, validate_parameters)
+#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_PARAMETER_CHANGED(n, t)
+    CXT_MACRO_REGISTER_PARAMETERS_CHANGED((*this), pImpl_->cxt_, GSCAM_ALL_PARAMS, validate_parameters)
   }
 
   GSCamNode::~GSCamNode()
