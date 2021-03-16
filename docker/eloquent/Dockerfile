@@ -10,8 +10,8 @@ RUN apt-get install -y libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-
 
 WORKDIR /work/gscam2_ws/src
 
-RUN git clone https://github.com/clydemcqueen/gscam2.git
-RUN git clone https://github.com/ptrmu/ros2_shared.git
+RUN git clone https://github.com/clydemcqueen/gscam2.git -b eloquent
+RUN git clone https://github.com/ptrmu/ros2_shared.git -b eloquent
 
 WORKDIR /work/gscam2_ws
 
