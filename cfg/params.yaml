@@ -1,0 +1,9 @@
+# Example parameter file, see parameters_launch.py
+
+# Format is namespace_name/node_name
+my_camera/gscam_publisher:
+  ros__parameters:
+    gscam_config: 'videotestsrc ! video/x-raw, format=BGRx ! videoconvert'
+    preroll: False
+    use_gst_timestamps: False
+    frame_id: 'my_camera_frame'

@@ -1,10 +1,11 @@
 """
 Dynamically compose GSCamNode and ImageSubscriberNode in a component_container.
-Limitations of this container:
+
+Limitations:
  -- stdout is not set to flush after each line, so the most recent log messages may be delayed
 """
 
-import launch
+from launch import LaunchDescription
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
@@ -33,4 +34,4 @@ def generate_launch_description():
         output='screen',
     )
 
-    return launch.LaunchDescription([container])
+    return LaunchDescription([container])
