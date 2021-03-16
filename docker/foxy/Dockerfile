@@ -21,4 +21,4 @@ RUN /bin/bash -c "source /opt/ros/foxy/setup.bash && colcon build"
 
 CMD ["/bin/bash", "-c", "source install/local_setup.bash \
 && export GSCAM_CONFIG='videotestsrc pattern=snow ! video/x-raw,width=1280,height=720 ! videoconvert' \
-&& ros2 run gscam gscam_main"]
+&& ros2 run gscam2 gscam_main"]

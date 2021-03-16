@@ -1,6 +1,6 @@
-#include "gscam/subscriber_node.hpp"
+#include "gscam2/subscriber_node.hpp"
 
-namespace gscam
+namespace gscam2
 {
 
   ImageSubscriberNode::ImageSubscriberNode(const rclcpp::NodeOptions &options) :
@@ -32,8 +32,8 @@ namespace gscam
     RCLCPP_INFO(get_logger(), "ready");
   }
 
-} // namespace gscam
+} // namespace gscam2
 
 #include "rclcpp_components/register_node_macro.hpp"
 
-RCLCPP_COMPONENTS_REGISTER_NODE(gscam::ImageSubscriberNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(gscam2::ImageSubscriberNode)

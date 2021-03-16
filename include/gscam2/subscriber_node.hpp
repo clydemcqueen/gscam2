@@ -4,7 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
 
-namespace gscam
+namespace gscam2
 {
 
   // Node that subscribes to a topic, used for testing composition and IPC
@@ -17,6 +17,6 @@ namespace gscam
     explicit ImageSubscriberNode(const rclcpp::NodeOptions &options);
   };
 
-} // namespace gscam
+} // namespace gscam2
 
 #endif //SIMPLE_SUBSCRIBER_HPP

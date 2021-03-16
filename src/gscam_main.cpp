@@ -1,4 +1,4 @@
-#include "gscam/gscam_node.hpp"
+#include "gscam2/gscam_node.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -14,7 +14,7 @@ int main(int argc, char **argv)
   options.use_intra_process_comms(false);
 
   // Create node
-  auto node = std::make_shared<gscam::GSCamNode>(options);
+  auto node = std::make_shared<gscam2::GSCamNode>(options);
 
   // Set logging level
   auto result = rcutils_logging_set_logger_level(node->get_logger().get_name(), RCUTILS_LOG_SEVERITY_INFO);

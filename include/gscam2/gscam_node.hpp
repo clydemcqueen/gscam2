@@ -3,7 +3,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-namespace gscam
+namespace gscam2
 {
 
   class GSCamNode : public rclcpp::Node

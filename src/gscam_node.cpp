@@ -1,4 +1,4 @@
-#include "gscam/gscam_node.hpp"
+#include "gscam2/gscam_node.hpp"
 
 extern "C" {
 #include "gst/gst.h"
@@ -11,7 +11,7 @@ extern "C" {
 #include "sensor_msgs/msg/compressed_image.hpp"
 #include "sensor_msgs/msg/image.hpp"
 
-namespace gscam
+namespace gscam2
 {
 
   //=============================================================================
@@ -471,8 +471,8 @@ namespace gscam
     pImpl_->restart();
   }
 
-} // namespace gscam
+} // namespace gscam2
 
 #include "rclcpp_components/register_node_macro.hpp"
 
-RCLCPP_COMPONENTS_REGISTER_NODE(gscam::GSCamNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(gscam2::GSCamNode)
