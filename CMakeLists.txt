@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(gscam)
+project(gscam2)
 
 # Default to C99
 if (NOT CMAKE_C_STANDARD)
@@ -67,8 +67,8 @@ target_compile_definitions(gscam_node
 ament_target_dependencies(gscam_node
   ${GSCAM_NODE_DEPS})
 
-rclcpp_components_register_nodes(gscam_node "gscam::GSCamNode")
-set(node_plugins "${node_plugins}gscam::GSCamNode;$<TARGET_FILE:gscam_node>\n")
+rclcpp_components_register_nodes(gscam_node "gscam2::GSCamNode")
+set(node_plugins "${node_plugins}gscam2::GSCamNode;$<TARGET_FILE:gscam_node>\n")
 
 #=============
 # Test subscriber node
@@ -91,8 +91,8 @@ target_compile_definitions(subscriber_node
 ament_target_dependencies(subscriber_node
   ${SUBSCRIBER_NODE_DEPS})
 
-rclcpp_components_register_nodes(subscriber_node "gscam::ImageSubscriberNode")
-set(node_plugins "${node_plugins}gscam::ImageSubscriberNode;$<TARGET_FILE:subscriber_node>\n")
+rclcpp_components_register_nodes(subscriber_node "gscam2::ImageSubscriberNode")
+set(node_plugins "${node_plugins}gscam2::ImageSubscriberNode;$<TARGET_FILE:subscriber_node>\n")
 
 #=============
 # GSCam main, statically linked to make IDE debugging easier

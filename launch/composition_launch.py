@@ -12,21 +12,21 @@ from launch_ros.descriptions import ComposableNode
 def generate_launch_description():
 
     container = ComposableNodeContainer(
-        node_name='my_container',
-        node_namespace='',
+        name='my_container',
+        namespace='',
         package='rclcpp_components',
-        node_executable='component_container',
+        executable='component_container',
         composable_node_descriptions=[
             ComposableNode(
-                package='gscam',
-                node_plugin='gscam::GSCamNode',
-                node_name='image_publisher',
+                package='gscam2',
+                plugin='gscam2::GSCamNode',
+                name='image_publisher',
                 extra_arguments=[{'use_intra_process_comms': True}],
             ),
             ComposableNode(
-                package='gscam',
-                node_plugin='gscam::ImageSubscriberNode',
-                node_name='image_subscriber',
+                package='gscam2',
+                plugin='gscam2::ImageSubscriberNode',
+                name='image_subscriber',
                 extra_arguments=[{'use_intra_process_comms': True}],
             ),
         ],

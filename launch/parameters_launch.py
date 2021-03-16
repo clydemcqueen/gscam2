@@ -2,6 +2,8 @@
 Dynamically compose GSCamNode and ImageSubscriberNode in a component_container with reammping and parameter
 """
 
+# TODO(clyde): update this example
+
 import launch
 import os
 from launch_ros.actions import ComposableNodeContainer

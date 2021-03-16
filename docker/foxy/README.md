@@ -2,7 +2,7 @@
 
 In terminal 1:
 ~~~
-docker build --tag gscam2:foxy .
+docker build --pull --no-cache --tag gscam2:foxy .
 docker run -it gscam2:foxy
 ~~~
 
