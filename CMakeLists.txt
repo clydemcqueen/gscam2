@@ -55,6 +55,7 @@ set(GSCAM_NODE_DEPS
   class_loader
   GST_APP
   rclcpp
+  rclcpp_components
   ros2_shared
   sensor_msgs)
 
@@ -80,6 +81,7 @@ set(SUBSCRIBER_NODE_SOURCES
 set(SUBSCRIBER_NODE_DEPS
   class_loader
   rclcpp
+  rclcpp_components
   sensor_msgs)
 
 add_library(subscriber_node SHARED
