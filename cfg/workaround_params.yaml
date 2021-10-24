@@ -1,0 +1,7 @@
+# Parameters for composable nodes
+# This is a workaround for https://github.com/ros2/launch_ros/issues/156
+
+gscam_config: 'videotestsrc ! video/x-raw, format=BGRx ! videoconvert'
+preroll: False
+use_gst_timestamps: False
+frame_id: 'my_camera_frame'

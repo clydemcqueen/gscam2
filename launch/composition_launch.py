@@ -22,6 +22,9 @@ def generate_launch_description():
                 package='gscam2',
                 plugin='gscam2::GSCamNode',
                 name='image_publisher',
+                parameters=[{
+                    'gscam_config': 'videotestsrc pattern=snow ! video/x-raw,width=1280,height=720 ! videoconvert',
+                }],
                 extra_arguments=[{'use_intra_process_comms': True}],
             ),
             ComposableNode(
