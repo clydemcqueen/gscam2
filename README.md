@@ -7,28 +7,8 @@ Supports [ROS2 intra-process comms](https://index.ros.org//doc/ros2/Tutorials/In
 
 ## Install and build
 
-[Install GStreamer](https://gstreamer.freedesktop.org/documentation/installing/on-linux.html?gi-language=c#),
-including this package:
-~~~
-sudo apt install libgstreamer-plugins-base1.0-dev
-~~~
-
-Install this additional ROS package:
-~~~
-sudo apt install ros-foxy-camera-info-manager
-~~~
-
-Download and build gscam2:
-~~~
-mkdir ~/ros2/gscam2_ws/src
-cd ~/ros2/gscam2_ws/src
-git clone https://github.com/clydemcqueen/gscam2.git
-git clone https://github.com/ptrmu/ros2_shared.git
-cd ~/ros2/gscam2_ws/
-source /opt/ros/foxy/setup.bash
-colcon build
-source install/local_setup.bash
-~~~
+Tested on ROS2 Eloquent (Ubuntu 18.04) and Foxy (Ubuntu 20.04).
+See the [Dockerfile](Dockerfile) for install and build instructions.
 
 ## Usage
 
@@ -94,12 +74,12 @@ ros2 run gscam2 ipc_test_main
 | Parameter | Type | Default | Notes |
 |---|---|---|---|
 | `gscam_config` | string | | GStreamer pipeline configuration |
-| `sync_sink` | bool | True | Synchronize the app sink |
-| `preroll` | bool | False | Prefill buffers |
+| `sync_sink` | bool | True | Enable GstBaseSink synchronization |
+| `preroll` | bool | False | Transition to GST_STATE_PLAYING twice |
 | `use_gst_timestamps` | bool | False | Use gst time instead of ROS time |
 | `image_encoding` | string | `sensor_msgs::image_encodings::RGB8` |  ROS image encoding |
-| `camera_info_url` | string | | URL to camera info file, e.g., `file://path/to/file` |
-| `camera_name` | string | | Name of the camera, should match the name in the camera info file  |
+| `camera_info_url` | string | | URL to camera info file, e.g., `file:///path/to/file` |
+| `camera_name` | string | | Replaces `${NAME}` in the URL  |
 | `frame_id` | string | camera_frame | Camera frame ID |
 
 ## Publishers
