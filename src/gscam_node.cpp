@@ -34,7 +34,7 @@ namespace gscam2
 
   struct GSCamContext
   {
-    CXT_MACRO_DEFINE_MEMBERS(GSCAM_ALL_PARAMS)
+    CXT_MACRO_DEFINE_MEMBERS(GSCAM_ALL_PARAMS)  // NOLINT
   };
 
   //=============================================================================
@@ -54,7 +54,7 @@ namespace gscam2
     GstElement *sink_;
 
     // We need to poll GStreamer to get data
-    // Move this to it's own thread to avoid blocking or slowing down the rclcpp::spin() thread
+    // Move this to its own thread to avoid blocking or slowing down the rclcpp::spin() thread
     std::thread pipeline_thread_;
 
     // Used to stop the pipeline thread
@@ -64,7 +64,7 @@ namespace gscam2
     int width_, height_;
 
     // Calibration between ros::Time and gst timestamps
-    int64_t time_offset_;
+    GstClockTime time_offset_;
 
     // Publish images...
     rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr camera_pub_;
@@ -129,8 +129,7 @@ namespace gscam2
 
     RCLCPP_INFO(node_->get_logger(), "Gstreamer version: %s", gst_version_string());
 
-    GError *error = 0; // Assignment to zero is a gst requirement
-
+    GError *error = nullptr;
     pipeline_ = gst_parse_launch(cxt_.gscam_config_.c_str(), &error);
     if (!pipeline_) {
       RCLCPP_FATAL(node_->get_logger(), error->message);
@@ -309,7 +308,7 @@ namespace gscam2
     camera_info_manager::CameraInfo cur_cinfo = camera_info_manager_.getCameraInfo();
     auto cinfo = std::make_unique<sensor_msgs::msg::CameraInfo>(cur_cinfo);
     if (cxt_.use_gst_timestamps_) {
-      cinfo->header.stamp = rclcpp::Time(buf->pts + bt + time_offset_);
+      cinfo->header.stamp = rclcpp::Time(static_cast<int64_t>(buf->pts + bt + time_offset_));
     } else {
       cinfo->header.stamp = node_->now();
     }
@@ -348,7 +347,7 @@ namespace gscam2
       img->is_bigendian = false;
       img->data.resize(expected_frame_size);
 
-      // Copy the image so we can free the buffer allocated by gstreamer
+      // Copy the image, so we can free the buffer allocated by gstreamer
       if (cxt_.image_encoding_ == sensor_msgs::image_encodings::RGB8) {
         img->step = width_ * 3;
       } else {
@@ -417,19 +416,19 @@ namespace gscam2
                   cxt_.camera_info_url_.c_str());
     }
 
-    // [Re-]start the pipeline in it's own thread
+    // [Re-]start the pipeline in its own thread
     if (create_pipeline()) {
       pipeline_thread_ = std::thread(
         [this]()
         {
-          RCLCPP_INFO(node_->get_logger(), "Thread running");
+          RCLCPP_INFO(node_->get_logger(), "Thread running");  // NOLINT
 
           while (!stop_signal_ && rclcpp::ok()) {
             process_frame();
           }
 
           stop_signal_ = false;
-          RCLCPP_INFO(node_->get_logger(), "Thread stopped");
+          RCLCPP_INFO(node_->get_logger(), "Thread stopped");  // NOLINT
         });
     } else {
       delete_pipeline();
@@ -454,7 +453,7 @@ namespace gscam2
     // Register parameters, if they change validate_parameters() will be called again
 #undef CXT_MACRO_MEMBER
 #define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_PARAMETER_CHANGED(n, t)
-    CXT_MACRO_REGISTER_PARAMETERS_CHANGED((*this), pImpl_->cxt_, GSCAM_ALL_PARAMS, validate_parameters)
+    CXT_MACRO_REGISTER_PARAMETERS_CHANGED((*this), pImpl_->cxt_, GSCAM_ALL_PARAMS, validate_parameters) // NOLINT
   }
 
   GSCamNode::~GSCamNode()
@@ -475,4 +474,4 @@ namespace gscam2
 
 #include "rclcpp_components/register_node_macro.hpp"
 
-RCLCPP_COMPONENTS_REGISTER_NODE(gscam2::GSCamNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(gscam2::GSCamNode)  // NOLINT

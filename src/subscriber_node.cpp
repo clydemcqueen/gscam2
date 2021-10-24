@@ -6,18 +6,15 @@ namespace gscam2
   ImageSubscriberNode::ImageSubscriberNode(const rclcpp::NodeOptions &options) :
     Node("image_subscriber", options)
   {
+    (void) sub_;
+
     RCLCPP_INFO(get_logger(), "use_intra_process_comms=%d", options.use_intra_process_comms());
 
     sub_ = this->create_subscription<sensor_msgs::msg::Image>(
       "image_raw", 10,
       [this](sensor_msgs::msg::Image::UniquePtr msg)
       {
-        static bool receiving = false;
-
-        if (!receiving) {
-          receiving = true;
-          RCLCPP_INFO(get_logger(), "receiving messages");
-        }
+        RCLCPP_INFO_ONCE(get_logger(), "receiving messages");  // NOLINT
 
 #undef SHOW_ADDRESS
 #ifdef SHOW_ADDRESS
@@ -36,4 +33,4 @@ namespace gscam2
 
 #include "rclcpp_components/register_node_macro.hpp"
 
-RCLCPP_COMPONENTS_REGISTER_NODE(gscam2::ImageSubscriberNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(gscam2::ImageSubscriberNode)  // NOLINT
