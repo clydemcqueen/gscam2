@@ -331,7 +331,7 @@ namespace gscam2
 
       if (buf_size < expected_frame_size) {
         RCLCPP_WARN(node_->get_logger(),
-                    "Image buffer underflow: expected frame to be %d bytes but got only %d"
+                    "Image buffer underflow: expected frame to be %d bytes but got only %lu"
                     " bytes (make sure frames are correctly encoded)", expected_frame_size, (buf_size));
       }
 
