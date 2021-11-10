@@ -41,6 +41,6 @@ jobs:
       - name: build and test
         uses: ros-tooling/action-ros-ci@master
         with:
-          package-name: ukf
+          package-name: gscam2
           target-ros2-distro: ${{ matrix.ros_distribution }}
           vcs-repo-file-url: ""
