@@ -30,7 +30,7 @@ jobs:
             ros_distribution: rolling
             ros_version: 2
     container:
-      image: ${{ matrix.docker_image }}
+      image: ${{matrix.docker_image}}
     steps:
       - name: setup directories
         run: mkdir -p ros_ws/src
@@ -42,5 +42,5 @@ jobs:
         uses: ros-tooling/action-ros-ci@master
         with:
           package-name: gscam2
-          target-ros2-distro: ${{ matrix.ros_distribution }}
-          vcs-repo-file-url: ""
+          target-ros2-distro: ${{matrix.ros_distribution}}
+          vcs-repo-file-url: "https://raw.githubusercontent.com/${{github.repository}}/${{github.sha}}/workspace.repos"

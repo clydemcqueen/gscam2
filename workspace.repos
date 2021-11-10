@@ -1,0 +1,5 @@
+repositories:
+  ptrmu/ros2_shared:
+    type: git
+    url: https://github.com/ptrmu/ros2_shared
+    version: master
