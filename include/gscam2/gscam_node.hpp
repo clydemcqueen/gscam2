@@ -9,7 +9,7 @@ namespace gscam2
   class GSCamNode : public rclcpp::Node
   {
     // Hide implementation
-    struct impl;
+    class impl;
     std::unique_ptr<impl> pImpl_;
 
     void validate_parameters();
