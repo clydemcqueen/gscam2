@@ -6,20 +6,19 @@
 namespace gscam2
 {
 
-  class GSCamNode : public rclcpp::Node
-  {
-    // Hide implementation
-    class impl;
-    std::unique_ptr<impl> pImpl_;
+class GSCamNode : public rclcpp::Node
+{
+  // Hide implementation
+  class impl;
+  std::unique_ptr<impl> pImpl_;
 
-    void validate_parameters();
+  void validate_parameters();
 
-  public:
+public:
+  explicit GSCamNode(const rclcpp::NodeOptions & options);
 
-    explicit GSCamNode(const rclcpp::NodeOptions &options);
-
-    ~GSCamNode() override;
-  };
+  ~GSCamNode() override;
+};
 
 }
 

@@ -3,28 +3,28 @@ cmake_minimum_required(VERSION 3.5)
 project(gscam2)
 
 # Default to C99
-if (NOT CMAKE_C_STANDARD)
+if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
-endif ()
+endif()
 
 # Default to C++14
-if (NOT CMAKE_CXX_STANDARD)
+if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
-endif ()
+endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 # Emulate Colcon in CLion
-if ($ENV{CLION_IDE})
+if($ENV{CLION_IDE})
   message(STATUS "Running inside CLion")
   find_package(fastrtps_cmake_module REQUIRED)
   set(FastRTPS_INCLUDE_DIR "/opt/ros/foxy/include")
   set(FastRTPS_LIBRARY_RELEASE "/opt/ros/foxy/lib/libfastrtps.so")
   set(ros2_shared_DIR "${PROJECT_SOURCE_DIR}/../../../install/ros2_shared/share/ros2_shared/cmake")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRUN_INSIDE_CLION")
-endif ()
+endif()
 
 # Gstreamer doesn't provide CMake files
 find_package(PkgConfig)
@@ -128,6 +128,16 @@ ament_target_dependencies(
   ipc_test_main
   rclcpp
 )
+
+#=============
+# Test
+#=============
+
+# Load & run linters listed in package.xml
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
 #=============
 # Export

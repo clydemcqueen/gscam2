@@ -2,7 +2,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 {
   // Force flush of the stdout buffer
   setvbuf(stdout, nullptr, _IONBF, BUFSIZ);
@@ -17,7 +17,8 @@ int main(int argc, char **argv)
   auto node = std::make_shared<gscam2::GSCamNode>(options);
 
   // Set logging level
-  auto result = rcutils_logging_set_logger_level(node->get_logger().get_name(), RCUTILS_LOG_SEVERITY_INFO);
+  auto result = rcutils_logging_set_logger_level(
+    node->get_logger().get_name(), RCUTILS_LOG_SEVERITY_INFO);
   (void) result;
 
   // Spin until rclcpp::ok() returns false

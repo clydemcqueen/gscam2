@@ -20,7 +20,7 @@ config_dir = os.path.join(get_package_share_directory('gscam2'), 'cfg')
 print(config_dir)
 
 # Parameters file, see https://github.com/ros2/launch_ros/issues/156
-params_file = os.path.join(config_dir, "workaround_params.yaml")
+params_file = os.path.join(config_dir, 'workaround_params.yaml')
 print(params_file)
 
 # Camera calibration file
