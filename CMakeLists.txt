@@ -137,6 +137,16 @@ ament_target_dependencies(
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  find_package(ament_cmake_gtest)
+  ament_add_gtest(
+    smoke_test
+    test/smoke_test.cpp
+    ENV GSCAM_CONFIG="videotestsrc pattern=snow ! capsfilter caps=video/x-raw,width=800,height=600 ! videoconvert"
+  )
+  if(TARGET smoke_test)
+    target_link_libraries(smoke_test gscam_node)
+  endif()
 endif()
 
 #=============
