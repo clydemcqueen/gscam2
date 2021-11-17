@@ -11,6 +11,7 @@ from launch_ros.descriptions import ComposableNode
 
 
 def generate_launch_description():
+    gscam_config = 'videotestsrc pattern=snow ! video/x-raw,width=1280,height=720 ! videoconvert'
 
     container = ComposableNodeContainer(
         name='my_container',
@@ -23,7 +24,7 @@ def generate_launch_description():
                 plugin='gscam2::GSCamNode',
                 name='image_publisher',
                 parameters=[{
-                    'gscam_config': 'videotestsrc pattern=snow ! video/x-raw,width=1280,height=720 ! videoconvert',
+                    'gscam_config': gscam_config,
                 }],
                 extra_arguments=[{'use_intra_process_comms': True}],
             ),

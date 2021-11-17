@@ -3,7 +3,7 @@
 
 // Manually compose OpencvCamNode and ImageSubscriberNode with use_intra_process_comms=true
 
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 {
   // Force flush of the stdout buffer
   setvbuf(stdout, nullptr, _IONBF, BUFSIZ);

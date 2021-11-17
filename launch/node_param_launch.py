@@ -1,6 +1,4 @@
-"""
-Launch a Node with parameters and remappings.
-"""
+"""Launch a Node with parameters and remappings."""
 
 import os
 
@@ -16,7 +14,7 @@ config_dir = os.path.join(get_package_share_directory('gscam2'), 'cfg')
 print(config_dir)
 
 # Parameters file
-params_file = os.path.join(config_dir, "params.yaml")
+params_file = os.path.join(config_dir, 'params.yaml')
 print(params_file)
 
 # Camera calibration file
@@ -37,7 +35,7 @@ def generate_launch_description():
             params_file,
             # A few more parameters
             {
-                'camera_name': camera_name, # Camera Name
+                'camera_name': camera_name,  # Camera Name
                 'camera_info_url': camera_config,  # Camera calibration information
             },
         ],
