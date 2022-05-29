@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.6)
 
 project(gscam2)
 
@@ -27,9 +27,9 @@ if($ENV{CLION_IDE})
 endif()
 
 # Gstreamer doesn't provide CMake files
-find_package(PkgConfig)
-pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
-pkg_check_modules(GST_APP REQUIRED gstreamer-app-1.0)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0 IMPORTED_TARGET)
+pkg_check_modules(GST_APP REQUIRED gstreamer-app-1.0 IMPORTED_TARGET)
 
 find_package(ament_cmake REQUIRED)
 find_package(camera_calibration_parsers REQUIRED)
@@ -50,21 +50,18 @@ set(node_plugins "")
 # GSCam node
 #=============
 
-set(GSCAM_NODE_SOURCES
-  src/gscam_node.cpp)
-
 set(GSCAM_NODE_DEPS
   camera_calibration_parsers
   camera_info_manager
   class_loader
-  GST_APP
   rclcpp
   rclcpp_components
   ros2_shared
   sensor_msgs)
 
-add_library(gscam_node SHARED
-  ${GSCAM_NODE_SOURCES})
+add_library(gscam_node SHARED)
+target_sources(gscam_node PRIVATE src/gscam_node.cpp)
+add_library(gscam2::gscam_node ALIAS gscam_node)
 
 target_compile_definitions(gscam_node
   PRIVATE "COMPOSITION_BUILDING_DLL")
@@ -72,6 +69,9 @@ target_compile_definitions(gscam_node
 ament_target_dependencies(gscam_node
   ${GSCAM_NODE_DEPS})
 
+target_link_libraries(gscam_node PkgConfig::GSTREAMER PkgConfig::GST_APP)
+target_include_directories(gscam_node PUBLIC
+  "$<BUILD_INTERFACE:${GSTREAMER_INCLUDE_DIRS}>")
 rclcpp_components_register_nodes(gscam_node "gscam2::GSCamNode")
 set(node_plugins "${node_plugins}gscam2::GSCamNode;$<TARGET_FILE:gscam_node>\n")
 
@@ -105,11 +105,12 @@ set(node_plugins "${node_plugins}gscam2::ImageSubscriberNode;$<TARGET_FILE:subsc
 #=============
 
 add_executable(gscam_main
-  src/gscam_main.cpp
-  ${GSCAM_NODE_SOURCES})
+  src/gscam_main.cpp)
 
 ament_target_dependencies(gscam_main
   ${GSCAM_NODE_DEPS})
+
+target_link_libraries(gscam_main gscam2::gscam_node)
 
 #=============
 # Manual composition of camera and subscriber nodes, IPC=true
