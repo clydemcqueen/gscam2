@@ -8,43 +8,49 @@ on:
 
 jobs:
   test_environment:
-    runs-on: [ubuntu-latest]
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+
       matrix:
-        ros_distribution:
-          - foxy
-          - galactic
-          - rolling
+        ros_distribution: [foxy, galactic, humble, rolling]
+
         include:
-          # Foxy Fitzroy (June 2020 - May 2023)
-          - docker_image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
-            ros_distribution: foxy
-            ros_version: 2
-          # Galactic Geochelone (May 2021 - November 2022)
-          - docker_image: rostooling/setup-ros-docker:ubuntu-focal-ros-galactic-ros-base-latest
-            ros_distribution: galactic
-            ros_version: 2
-          # Humble Hawksbill (May 2022 - May 2027)
-          - docker_image: rostooling/setup-ros-docker:ubuntu-jammy-ros-humble-ros-base-latest
-            ros_distribution: humble
-            ros_version: 2
-          # Rolling Ridley  (June 2020 - Present)
-          - docker_image: rostooling/setup-ros-docker:ubuntu-jammy-ros-rolling-ros-base-latest
-            ros_distribution: rolling
-            ros_version: 2
+          - ros_distribution: foxy
+            docker_image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
+            fix_libunwind: false
+
+          - ros_distribution: galactic
+            docker_image: rostooling/setup-ros-docker:ubuntu-focal-ros-galactic-ros-base-latest
+            fix_libunwind: false
+
+          - ros_distribution: humble
+            docker_image: rostooling/setup-ros-docker:ubuntu-jammy-ros-humble-ros-base-latest
+            fix_libunwind: true
+
+          - ros_distribution: rolling
+            docker_image: rostooling/setup-ros-docker:ubuntu-jammy-ros-rolling-ros-base-latest
+            fix_libunwind: true
+
     container:
-      image: ${{matrix.docker_image}}
+      image: ${{ matrix.docker_image }}
+
     steps:
-      - name: setup directories
-        run: mkdir -p ros_ws/src
-      - name: checkout
-        uses: actions/checkout@v2
+      # The 22.04 virtual environment includes libunwind-14-dev, which conflicts with libunwind-dev
+      - run: |-
+          sudo apt-get remove libunwind-14 -y
+          sudo apt-get install libunwind-dev -y
+        if: matrix.fix_libunwind
+
+      - run: |-
+          mkdir -p ros_ws/src
+
+      - uses: actions/checkout@v2
         with:
           path: ros_ws/src
-      - name: build and test
-        uses: ros-tooling/action-ros-ci@master
+
+      - uses: ros-tooling/action-ros-ci@0.2.5
         with:
           package-name: gscam2
-          target-ros2-distro: ${{matrix.ros_distribution}}
+          target-ros2-distro: ${{ matrix.ros_distribution }}
           vcs-repo-file-url: "https://raw.githubusercontent.com/${{github.repository}}/${{github.sha}}/workspace.repos"
