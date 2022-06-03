@@ -1,4 +1,4 @@
-# gscam2
+# gscam2 ![ROS2 CI](https://github.com/clydemcqueen/gscam2/actions/workflows/build_test.yml/badge.svg?branch=main)
 
 ROS2 port of [gscam](https://github.com/ros-drivers/gscam).
 Supports [ROS2 intra-process comms](https://index.ros.org//doc/ros2/Tutorials/Intra-Process-Communication/).
@@ -7,7 +7,7 @@ Supports [ROS2 intra-process comms](https://index.ros.org//doc/ros2/Tutorials/In
 
 ## Install and build
 
-Tested on ROS2 Eloquent (Ubuntu 18.04) and Foxy (Ubuntu 20.04).
+Tested on ROS2 Foxy, Galactic, Humble and Rolling.
 See the [Dockerfile](Dockerfile) for install and build instructions.
 
 ## Usage
