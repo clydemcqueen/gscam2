@@ -3,6 +3,8 @@
 ROS2 port of [gscam](https://github.com/ros-drivers/gscam).
 Supports [ROS2 intra-process comms](https://index.ros.org//doc/ros2/Tutorials/Intra-Process-Communication/).
 
+> Update 15-Jun-22: [gscam](https://index.ros.org/p/gscam/github-ros-drivers-gscam/) has been released for ROS2. It does not support IPC.
+
 > Update 16-Mar-21: the package name has been updated to match the repository name (gscam2)
 
 ## Install and build
