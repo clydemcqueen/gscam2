@@ -152,9 +152,9 @@ bool GSCamNode::impl::create_pipeline()
       nullptr);
   } else if (cxt_.image_encoding_ == sensor_msgs::image_encodings::YUV422_YUY2) {
     caps = gst_caps_new_simple(
-        "video/x-raw",
-        "format", G_TYPE_STRING, "YUY2",
-        nullptr);
+      "video/x-raw",
+      "format", G_TYPE_STRING, "YUY2",
+      nullptr);
   } else if (cxt_.image_encoding_ == "jpeg") {
     caps = gst_caps_new_simple("image/jpeg", nullptr, nullptr);
   }
@@ -271,7 +271,8 @@ void GSCamNode::impl::delete_pipeline()
   }
 }
 
-unsigned int bytes_per_pixel(const std::string & encoding) {
+unsigned int bytes_per_pixel(const std::string & encoding)
+{
   if (encoding == sensor_msgs::image_encodings::RGB8) {
     return 3;
   } else if (encoding == sensor_msgs::image_encodings::MONO8) {
@@ -343,7 +344,8 @@ void GSCamNode::impl::process_frame()
     cinfo_pub_->publish(std::move(cinfo));
   } else {
     // Complain if the returned buffer is smaller than we expect
-    const unsigned int expected_frame_size = width_ * height_ * bytes_per_pixel(cxt_.image_encoding_);
+    const unsigned int expected_frame_size = width_ * height_ *
+      bytes_per_pixel(cxt_.image_encoding_);
 
     if (buf_size < expected_frame_size) {
       RCLCPP_WARN(
