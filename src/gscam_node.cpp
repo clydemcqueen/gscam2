@@ -150,6 +150,11 @@ bool GSCamNode::impl::create_pipeline()
       "video/x-raw",
       "format", G_TYPE_STRING, "GRAY8",
       nullptr);
+  } else if (cxt_.image_encoding_ == sensor_msgs::image_encodings::YUV422_YUY2) {
+    caps = gst_caps_new_simple(
+      "video/x-raw",
+      "format", G_TYPE_STRING, "YUY2",
+      nullptr);
   } else if (cxt_.image_encoding_ == "jpeg") {
     caps = gst_caps_new_simple("image/jpeg", nullptr, nullptr);
   }
@@ -266,6 +271,18 @@ void GSCamNode::impl::delete_pipeline()
   }
 }
 
+unsigned int bytes_per_pixel(const std::string & encoding)
+{
+  if (encoding == sensor_msgs::image_encodings::RGB8) {
+    return 3;
+  } else if (encoding == sensor_msgs::image_encodings::MONO8) {
+    return 1;
+  } else {
+    // sensor_msgs::image_encodings::YUV422_YUY2
+    return 2;
+  }
+}
+
 void GSCamNode::impl::process_frame()
 {
   // This should block until a new frame is awake, this way, we'll run at the
@@ -327,10 +344,8 @@ void GSCamNode::impl::process_frame()
     cinfo_pub_->publish(std::move(cinfo));
   } else {
     // Complain if the returned buffer is smaller than we expect
-    const unsigned int expected_frame_size =
-      cxt_.image_encoding_ == sensor_msgs::image_encodings::RGB8 ?
-      width_ * height_ * 3 :
-      width_ * height_;
+    const unsigned int expected_frame_size = width_ * height_ *
+      bytes_per_pixel(cxt_.image_encoding_);
 
     if (buf_size < expected_frame_size) {
       RCLCPP_WARN(
@@ -352,11 +367,7 @@ void GSCamNode::impl::process_frame()
     img->data.resize(expected_frame_size);
 
     // Copy the image, so we can free the buffer allocated by gstreamer
-    if (cxt_.image_encoding_ == sensor_msgs::image_encodings::RGB8) {
-      img->step = width_ * 3;
-    } else {
-      img->step = width_;
-    }
+    img->step = width_ * bytes_per_pixel(cxt_.image_encoding_);
     std::copy(
       buf_data,
       (buf_data) + (buf_size),
@@ -408,6 +419,7 @@ void GSCamNode::impl::restart()
 
   if (cxt_.image_encoding_ != sensor_msgs::image_encodings::RGB8 &&
     cxt_.image_encoding_ != sensor_msgs::image_encodings::MONO8 &&
+    cxt_.image_encoding_ != sensor_msgs::image_encodings::YUV422_YUY2 &&
     cxt_.image_encoding_ != "jpeg")
   {
     RCLCPP_FATAL(
