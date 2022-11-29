@@ -13,17 +13,9 @@ jobs:
       fail-fast: false
 
       matrix:
-        ros_distribution: [foxy, galactic, humble, rolling]
+        ros_distribution: [humble, rolling]
 
         include:
-          - ros_distribution: foxy
-            docker_image: rostooling/setup-ros-docker:ubuntu-focal-ros-foxy-ros-base-latest
-            fix_libunwind: false
-
-          - ros_distribution: galactic
-            docker_image: rostooling/setup-ros-docker:ubuntu-focal-ros-galactic-ros-base-latest
-            fix_libunwind: false
-
           - ros_distribution: humble
             docker_image: rostooling/setup-ros-docker:ubuntu-jammy-ros-humble-ros-base-latest
             fix_libunwind: true
