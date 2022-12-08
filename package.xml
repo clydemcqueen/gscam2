@@ -3,7 +3,7 @@
 <package format="3">
 
     <name>gscam2</name>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
     <description>
         ROS2 camera driver built around the GStreamer pipeline
         Port of https://github.com/ros-drivers/gscam
