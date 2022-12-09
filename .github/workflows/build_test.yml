@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - 'main'
+      - 'foxy'
 
 jobs:
   test_environment:
@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
 
       matrix:
-        ros_distribution: [foxy, galactic, humble, rolling]
+        ros_distribution: [foxy, galactic]
 
         include:
           - ros_distribution: foxy
@@ -23,14 +23,6 @@ jobs:
           - ros_distribution: galactic
             docker_image: rostooling/setup-ros-docker:ubuntu-focal-ros-galactic-ros-base-latest
             fix_libunwind: false
-
-          - ros_distribution: humble
-            docker_image: rostooling/setup-ros-docker:ubuntu-jammy-ros-humble-ros-base-latest
-            fix_libunwind: true
-
-          - ros_distribution: rolling
-            docker_image: rostooling/setup-ros-docker:ubuntu-jammy-ros-rolling-ros-base-latest
-            fix_libunwind: true
 
     container:
       image: ${{ matrix.docker_image }}
