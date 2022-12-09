@@ -71,10 +71,32 @@ Manual composition -- handy for debugging:
 ros2 run gscam2 ipc_test_main
 ~~~
 
+### Finding GStreamer plugins
+
+GStreamer scans various paths for plugins and builds a plugin registry.
+[The search process is described here](https://gstreamer.freedesktop.org/documentation/gstreamer/gstregistry.html?gi-language=c).
+
+gscam uses a parameter `gst_plugin_path` instead than the commandline option `--gst-plugin-path`.
+The paths in `gst_plugin_path` are searched last, not first.
+
+If you have custom plugins you may need to override the plugin path. Here's an example showing how this works:
+~~~
+# Disable default locations
+export GST_PLUGIN_PATH=""
+export GST_PLUGIN_SYSTEM_PATH=""
+
+# Provide the pipeline configuration
+export GSCAM_CONFIG=videotestsrc pattern=snow ! video/x-raw,width=1280,height=720 ! videoconvert
+
+# Run gscam_main, providing a custom plugin path
+ros2 run gscam2 gscam_main  --ros-args -p gst_plugin_path:="/home/me/myplugins"
+~~~
+
 ## Parameters
 
 | Parameter | Type | Default | Notes |
 |---|---|---|---|
+| `gst_plugin_path` | string | | Similar to `--gst-plugin-path`, searchs path for plugins |
 | `gscam_config` | string | | GStreamer pipeline configuration |
 | `sync_sink` | bool | True | Enable GstBaseSink synchronization |
 | `preroll` | bool | False | Transition to GST_STATE_PLAYING twice |
@@ -84,7 +106,7 @@ ros2 run gscam2 ipc_test_main
 | `camera_name` | string | | Replaces `${NAME}` in the URL  |
 | `frame_id` | string | camera_frame | Camera frame ID |
 
-## Publishers
+## Topics
 - `camera_info`
 - `image_raw`
 - `image_raw/compressed` - only if image is encoded as a jpeg stream 

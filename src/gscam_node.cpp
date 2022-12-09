@@ -19,6 +19,7 @@ namespace gscam2
 //=============================================================================
 
 #define GSCAM_ALL_PARAMS \
+  CXT_MACRO_MEMBER(gst_plugin_path, std::string, "")        /* Additional plugin path  */ \
   CXT_MACRO_MEMBER(gscam_config, std::string, "")           /* Stream config  */ \
   CXT_MACRO_MEMBER(sync_sink, bool, true)                   /* Sync to the clock  */ \
   CXT_MACRO_MEMBER(preroll, bool, false)                    /* Pre-fill buffers  */ \
@@ -124,6 +125,23 @@ bool GSCamNode::impl::create_pipeline()
     // Only need to do this once
     gst_init(nullptr, nullptr);
     RCLCPP_INFO(node_->get_logger(), "Gstreamer initialized");
+
+    if (!cxt_.gst_plugin_path_.empty()) {
+      auto registry = gst_registry_get();
+      if (!registry) {
+        RCLCPP_ERROR(node_->get_logger(), "Could not get registry, ignoring gst_plugin_path");
+      } else {
+        if (gst_registry_scan_path(registry, cxt_.gst_plugin_path_.c_str())) {
+          RCLCPP_INFO(
+            node_->get_logger(), "Scanned '%s' and added plugins to the registry",
+            cxt_.gst_plugin_path_.c_str());
+        } else {
+          RCLCPP_WARN(
+            node_->get_logger(), "Scanned '%s' for plugins, but the registry did not change",
+            cxt_.gst_plugin_path_.c_str());
+        }
+      }
+    }
   }
 
   RCLCPP_INFO(node_->get_logger(), "Gstreamer version: %s", gst_version_string());
