@@ -1,17 +1,17 @@
 # Smoke test
 #
 # Terminal 1:
-#     docker build --pull --no-cache --build-arg TARGET_ROS_DISTRO=foxy --tag gscam2:foxy .
-#     docker run -it gscam2:foxy
+#     docker build --pull --no-cache --build-arg TARGET_ROS_DISTRO=humble --tag gscam2:humble .
+#     docker run -it gscam2:humble
 #
 # Terminal 2:
 #     docker container ls     # Get <container_name>
 #     docker exec -it <container_name> /bin/bash
-#     source /opt/ros/foxy/setup.bash
+#     source /opt/ros/humble/setup.bash
 #     ros2 topic list
 #     ros2 topic hz /image_raw
 
-ARG TARGET_ROS_DISTRO=foxy
+ARG TARGET_ROS_DISTRO=humble
 ARG ROS2_SHARED_BRANCH=master
 
 FROM osrf/ros:$TARGET_ROS_DISTRO-desktop
