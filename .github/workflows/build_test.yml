@@ -45,12 +45,5 @@ jobs:
         with:
           package-name: gscam2
           target-ros2-distro: ${{ matrix.ros_distribution }}
-          colcon-defaults: |
-            {
-              "build": {
-                "cmake-args": [
-                    "-DTRACETOOLS_DISABLED=ON"
-                ]
-              }
-            }
           vcs-repo-file-url: "https://raw.githubusercontent.com/${{github.repository}}/${{github.sha}}/workspace.repos"
+          extra-cmake-args: -DTRACETOOLS_TRACEPOINTS_EXCLUDED=ON
