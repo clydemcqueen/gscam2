@@ -9,7 +9,7 @@ Supports [ROS2 intra-process comms](https://index.ros.org//doc/ros2/Tutorials/In
 
 ## Install and build
 
-Tested on ROS2 Foxy, Galactic, Humble and Rolling.
+Tested on ROS2 Foxy (EOL), Galactic (EOL), Humble and Rolling.
 See the [Dockerfile](Dockerfile) for install and build instructions.
 
 ## Usage
