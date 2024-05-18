@@ -1,7 +1,7 @@
 # gscam2 ![ROS2 CI](https://github.com/clydemcqueen/gscam2/actions/workflows/build_test.yml/badge.svg?branch=main)
 
 ROS2 port of [gscam](https://github.com/ros-drivers/gscam).
-Supports [ROS2 intra-process comms](https://index.ros.org//doc/ros2/Tutorials/Intra-Process-Communication/).
+Supports [ROS2 intra-process comms](https://docs.ros.org/en/humble/Tutorials/Demos/Intra-Process-Communication.html).
 
 > Update 15-Jun-22: [gscam](https://index.ros.org/p/gscam/github-ros-drivers-gscam/) has been released for ROS2. It does not support IPC.
 
