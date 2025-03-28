@@ -173,6 +173,26 @@ bool GSCamNode::impl::create_pipeline()
       "video/x-raw",
       "format", G_TYPE_STRING, "YUY2",
       nullptr);
+  } else if (cxt_.image_encoding_ == sensor_msgs::image_encodings::BAYER_RGGB8){
+    caps = gst_caps_new_simple(
+      "video/x-bayer",
+      "format", G_TYPE_STRING, "rggb",
+      nullptr);
+  } else if (cxt_.image_encoding_ == sensor_msgs::image_encodings::BAYER_BGGR8){
+    caps = gst_caps_new_simple(
+      "video/x-bayer",
+      "format", G_TYPE_STRING, "bggr",
+      nullptr);
+  } else if (cxt_.image_encoding_ == sensor_msgs::image_encodings::BAYER_GBRG8){
+    caps = gst_caps_new_simple(
+      "video/x-bayer",
+      "format", G_TYPE_STRING, "gbrg",
+      nullptr);
+  } else if (cxt_.image_encoding_ == sensor_msgs::image_encodings::BAYER_GRBG8){
+    caps = gst_caps_new_simple(
+      "video/x-bayer",
+      "format", G_TYPE_STRING, "grbg",
+      nullptr);
   } else if (cxt_.image_encoding_ == "jpeg") {
     caps = gst_caps_new_simple("image/jpeg", nullptr, nullptr);
   }
@@ -293,7 +313,13 @@ unsigned int bytes_per_pixel(const std::string & encoding)
 {
   if (encoding == sensor_msgs::image_encodings::RGB8) {
     return 3;
-  } else if (encoding == sensor_msgs::image_encodings::MONO8) {
+  } else if (
+      encoding == sensor_msgs::image_encodings::MONO8 ||
+      encoding == sensor_msgs::image_encodings::BAYER_RGGB8 ||
+      encoding == sensor_msgs::image_encodings::BAYER_BGGR8 ||
+      encoding == sensor_msgs::image_encodings::BAYER_GBRG8 ||
+      encoding == sensor_msgs::image_encodings::BAYER_GRBG8
+  ){
     return 1;
   } else {
     // sensor_msgs::image_encodings::YUV422_YUY2
@@ -438,6 +464,10 @@ void GSCamNode::impl::restart()
   if (cxt_.image_encoding_ != sensor_msgs::image_encodings::RGB8 &&
     cxt_.image_encoding_ != sensor_msgs::image_encodings::MONO8 &&
     cxt_.image_encoding_ != sensor_msgs::image_encodings::YUV422_YUY2 &&
+    cxt_.image_encoding_ != sensor_msgs::image_encodings::BAYER_RGGB8 &&
+    cxt_.image_encoding_ != sensor_msgs::image_encodings::BAYER_BGGR8 &&
+    cxt_.image_encoding_ != sensor_msgs::image_encodings::BAYER_GBRG8 &&
+    cxt_.image_encoding_ != sensor_msgs::image_encodings::BAYER_GRBG8 &&
     cxt_.image_encoding_ != "jpeg")
   {
     RCLCPP_FATAL(
