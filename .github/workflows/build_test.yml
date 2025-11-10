@@ -13,15 +13,11 @@ jobs:
       fail-fast: false
 
       matrix:
-        ros_distribution: [humble, iron]
+        ros_distribution: [humble]
 
         include:
           - ros_distribution: humble
             docker_image: rostooling/setup-ros-docker:ubuntu-jammy-ros-humble-ros-base-latest
-            fix_libunwind: true
-
-          - ros_distribution: iron
-            docker_image: rostooling/setup-ros-docker:ubuntu-jammy-ros-iron-ros-base-latest
             fix_libunwind: true
 
     container:
@@ -37,11 +33,11 @@ jobs:
       - run: |-
           mkdir -p ros_ws/src
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           path: ros_ws/src
 
-      - uses: ros-tooling/action-ros-ci@0.3.1
+      - uses: ros-tooling/action-ros-ci@0.4.5
         with:
           package-name: gscam2
           target-ros2-distro: ${{ matrix.ros_distribution }}
