@@ -155,6 +155,12 @@ bool GSCamNode::impl::create_pipeline()
 
   // Create RGB sink
   sink_ = gst_element_factory_make("appsink", nullptr);
+  if (!sink_) {
+    RCLCPP_FATAL(
+      node_->get_logger(),
+      "gst_element_factory_make('appsink') failed. Is gstreamer1.0-plugins-base installed?");
+    return false;
+  }
   GstCaps * caps = gst_app_sink_get_caps(GST_APP_SINK(sink_));
 
   // http://gstreamer.freedesktop.org/data/doc/gstreamer/head/pwg/html/section-types-definitions.html
