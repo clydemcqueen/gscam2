@@ -41,7 +41,7 @@ jobs:
         with:
           path: ros_ws/src
 
-      - uses: ros-tooling/action-ros-ci@0.3.1
+      - uses: ros-tooling/action-ros-ci@0.4.5
         with:
           package-name: gscam2
           target-ros2-distro: ${{ matrix.ros_distribution }}
