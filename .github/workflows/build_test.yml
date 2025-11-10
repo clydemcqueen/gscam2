@@ -13,16 +13,18 @@ jobs:
       fail-fast: false
 
       matrix:
-        ros_distribution: [humble, iron]
+        ros_distribution: [humble, jazzy, kilted]
 
         include:
           - ros_distribution: humble
             docker_image: rostooling/setup-ros-docker:ubuntu-jammy-ros-humble-ros-base-latest
             fix_libunwind: true
 
-          - ros_distribution: iron
-            docker_image: rostooling/setup-ros-docker:ubuntu-jammy-ros-iron-ros-base-latest
-            fix_libunwind: true
+          - ros_distribution: jazzy
+            docker_image: rostooling/setup-ros-docker:ubuntu-noble-ros-jazzy-ros-base-latest
+
+          - ros_distribution: kilted
+            docker_image: rostooling/setup-ros-docker:ubuntu-noble-ros-kilted-ros-base-latest
 
     container:
       image: ${{ matrix.docker_image }}
