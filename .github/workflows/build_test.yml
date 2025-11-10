@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
 
       matrix:
-        ros_distribution: [humble, jazzy]
+        ros_distribution: [humble, jazzy, kilted]
 
         include:
           - ros_distribution: humble
@@ -22,6 +22,10 @@ jobs:
 
           - ros_distribution: jazzy
             docker_image: rostooling/setup-ros-docker:ubuntu-noble-ros-jazzy-ros-base-latest
+            fix_libunwind: false
+
+          - ros_distribution: kilted
+            docker_image: rostooling/setup-ros-docker:ubuntu-noble-ros-kilted-ros-base-latest
             fix_libunwind: false
 
     container:
