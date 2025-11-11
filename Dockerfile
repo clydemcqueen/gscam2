@@ -12,7 +12,6 @@
 #     ros2 topic hz /image_raw
 
 ARG TARGET_ROS_DISTRO=jazzy
-ARG ROS2_SHARED_BRANCH=master
 
 FROM osrf/ros:$TARGET_ROS_DISTRO-desktop
 
@@ -39,11 +38,8 @@ RUN apt-get update \
 WORKDIR /work/my_ws/src
 
 ARG TARGET_ROS_DISTRO
-ARG ROS2_SHARED_BRANCH
 
 COPY . gscam2
-
-RUN git clone https://github.com/ptrmu/ros2_shared.git -b $ROS2_SHARED_BRANCH
 
 WORKDIR /work/my_ws
 

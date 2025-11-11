@@ -31,7 +31,6 @@ find_package(class_loader REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rclpy REQUIRED)
-find_package(ros2_shared REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
 # Create ament index resource which references the libraries in the binary dir
@@ -61,7 +60,6 @@ target_link_libraries(gscam_node
     camera_info_manager::camera_info_manager
     class_loader::class_loader
     rclcpp_components::component
-    ros2_shared::ros2_shared
     sensor_msgs::sensor_msgs_library
   PUBLIC
     rclcpp::rclcpp

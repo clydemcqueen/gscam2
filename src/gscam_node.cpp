@@ -6,7 +6,7 @@ extern "C" {
 }
 
 #include "camera_info_manager/camera_info_manager.hpp"
-#include "ros2_shared/context_macros.hpp"
+#include "gscam2/context_macros.hpp"
 #include "sensor_msgs/image_encodings.hpp"
 #include "sensor_msgs/msg/compressed_image.hpp"
 #include "sensor_msgs/msg/image.hpp"
