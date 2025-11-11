@@ -9,7 +9,7 @@ Supports [ROS2 intra-process comms](https://docs.ros.org/en/humble/Tutorials/Dem
 
 ## Install and build
 
-Tested on ROS2 Foxy, Galactic, Humble and Rolling.
+Tested on ROS2 Humble, Jazzy and Kilted.
 See the [Dockerfile](Dockerfile) for install and build instructions.
 
 ## Usage
@@ -53,10 +53,11 @@ There's a [bug](https://github.com/clydemcqueen/gscam2/issues/4) where the last 
 
 IPC test -- CLI composition:
 ~~~
-# First shell
+# Create the container in the first shell; output will appear here as nodes are loaded:
+export GSCAM_CONFIG="videotestsrc pattern=snow ! video/x-raw,width=1280,height=720 ! videoconvert"
 ros2 run rclcpp_components component_container
 
-# Second shell (ignore the deprecation warning, see https://github.com/ros2/ros2cli/issues/336)
+# Add the nodes to the container in the second shell:
 ros2 component load /ComponentManager gscam2 gscam2::ImageSubscriberNode -e use_intra_process_comms:=true
 ros2 component load /ComponentManager gscam2 gscam2::GSCamNode -e use_intra_process_comms:=true
 ~~~
@@ -68,6 +69,7 @@ ros2 launch gscam2 composition_launch.py
 
 Manual composition -- handy for debugging:
 ~~~
+export GSCAM_CONFIG="videotestsrc pattern=snow ! video/x-raw,width=1280,height=720 ! videoconvert"
 ros2 run gscam2 ipc_test_main
 ~~~
 
