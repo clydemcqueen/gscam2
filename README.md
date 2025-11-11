@@ -107,6 +107,7 @@ ros2 run gscam2 gscam_main  --ros-args -p gst_plugin_path:="/home/me/myplugins"
 | `camera_info_url` | string | | URL to camera info file, e.g., `file:///path/to/file` |
 | `camera_name` | string | | Replaces `${NAME}` in the URL  |
 | `frame_id` | string | camera_frame | Camera frame ID |
+| `skip` | int | 0 | Skip n frames for each frame sent; useful for reducing frame rates |
 
 ## Topics
 - `camera_info`

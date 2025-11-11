@@ -28,6 +28,7 @@ namespace gscam2
   CXT_MACRO_MEMBER(camera_info_url, std::string, "")        /* Location of camera info file  */ \
   CXT_MACRO_MEMBER(camera_name, std::string, "")            /* Camera name  */ \
   CXT_MACRO_MEMBER(frame_id, std::string, "camera_frame")   /* Camera frame id  */ \
+  CXT_MACRO_MEMBER(skip, int64_t, 0)                        /* Skip n frames, then send 1  */ \
   /* End of list */
 
 #undef CXT_MACRO_MEMBER
@@ -67,6 +68,9 @@ class GSCamNode::impl
   // Calibration between ros::Time and gst timestamps
   GstClockTime time_offset_;
 
+  // Counter used to implement the 'skip' parameter
+  int64_t skip_count_;
+
   // Publish images...
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr camera_pub_;
 
@@ -98,11 +102,11 @@ public:
     stop_signal_(false),
     width_(0),
     height_(0),
-    time_offset_(0)
+    time_offset_(0),
+    skip_count_(0)
   {
   }
 
-  // Destructor
   ~impl()
   {
     if (pipeline_) {
@@ -346,6 +350,17 @@ void GSCamNode::impl::process_frame()
     std::this_thread::sleep_for(1s);
     return;
   }
+
+  // Implement frame skipping: drop 'skip' frames, then process 1
+  if (cxt_.skip_ > 0) {
+    if (skip_count_ < cxt_.skip_) {
+      ++skip_count_;
+      gst_sample_unref(sample);
+      return;
+    }
+    skip_count_ = 0;  // process this frame, then start counting again
+  }
+
   GstBuffer * buf = gst_sample_get_buffer(sample);
   GstMemory * memory = gst_buffer_get_memory(buf, 0);
   GstMapInfo info;
@@ -500,6 +515,9 @@ void GSCamNode::impl::restart()
       [this]()
       {
         RCLCPP_INFO(node_->get_logger(), "Thread running");    // NOLINT
+
+        // reset skipping state when (re)starting
+        skip_count_ = 0;
 
         while (!stop_signal_ && rclcpp::ok()) {
           process_frame();
