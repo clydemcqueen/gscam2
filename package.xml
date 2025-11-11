@@ -49,7 +49,6 @@
     <depend>rclcpp</depend>
     <depend>rclcpp_components</depend>
     <depend>rclpy</depend>
-    <depend>ros2_shared</depend>
     <depend>sensor_msgs</depend>
 
     <export>
