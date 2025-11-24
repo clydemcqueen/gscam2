@@ -41,7 +41,7 @@ jobs:
       - run: |-
           mkdir -p ros_ws/src
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           path: ros_ws/src
 
