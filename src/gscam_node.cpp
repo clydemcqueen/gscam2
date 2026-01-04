@@ -61,6 +61,7 @@ class GSCamNode::impl
 
   // Used to stop the pipeline thread
   std::atomic<bool> stop_signal_;
+  std::atomic<bool> shutdown_signal_;
 
   // Discover width and height from the incoming data
   int width_, height_;
@@ -100,6 +101,7 @@ public:
     pipeline_(nullptr),
     sink_(nullptr),
     stop_signal_(false),
+    shutdown_signal_(false),
     width_(0),
     height_(0),
     time_offset_(0),
@@ -109,17 +111,11 @@ public:
 
   ~impl()
   {
-    if (pipeline_) {
-      // Stop thread
-      stop_signal_ = true;
-      pipeline_thread_.join();
-
-      // Delete pipeline
-      delete_pipeline();
-    }
+    shutdown();
   }
 
   // Start or re-start pipeline
+  void shutdown();
   void restart();
 };
 
@@ -315,7 +311,9 @@ void GSCamNode::impl::delete_pipeline()
     gst_element_set_state(pipeline_, GST_STATE_NULL);
     gst_object_unref(pipeline_);
     pipeline_ = nullptr;
-    RCLCPP_INFO(node_->get_logger(), "Pipeline deleted");
+    if (!shutdown_signal_ && rclcpp::ok()) {
+      RCLCPP_INFO(node_->get_logger(), "Pipeline deleted");
+    }
   }
 }
 
@@ -339,15 +337,11 @@ unsigned int bytes_per_pixel(const std::string & encoding)
 
 void GSCamNode::impl::process_frame()
 {
-  // This should block until a new frame is awake, this way, we'll run at the
-  // actual capture framerate of the device.
-  // TODO use timeout to handle the case where there's no data
-  // RCLCPP_DEBUG(get_logger(), "Getting data...");
-  GstSample * sample = gst_app_sink_pull_sample(GST_APP_SINK(sink_));
+  // Use a timeout to allow graceful shutdown even when the pipeline stalls.
+  GstSample * sample = gst_app_sink_try_pull_sample(
+    GST_APP_SINK(sink_), 100 * GST_MSECOND);
   if (!sample) {
-    RCLCPP_ERROR(node_->get_logger(), "Could not get sample, pause for 1s");
-    using namespace std::chrono_literals;
-    std::this_thread::sleep_for(1s);
+    // No sample yet; return to allow stop checks and retries.
     return;
   }
 
@@ -457,12 +451,31 @@ void GSCamNode::impl::process_frame()
   gst_sample_unref(sample);
 }
 
+void GSCamNode::impl::shutdown()
+{
+  if (shutdown_signal_.exchange(true)) {
+    return;
+  }
+
+  if (pipeline_) {
+    stop_signal_ = true;
+    gst_element_set_state(pipeline_, GST_STATE_NULL);
+    if (pipeline_thread_.joinable()) {
+      pipeline_thread_.join();
+    }
+    delete_pipeline();
+  }
+}
+
 void GSCamNode::impl::restart()
 {
   if (pipeline_) {
     // Stop thread
     stop_signal_ = true;
-    pipeline_thread_.join();
+    gst_element_set_state(pipeline_, GST_STATE_NULL);
+    if (pipeline_thread_.joinable()) {
+      pipeline_thread_.join();
+    }
 
     // Delete pipeline
     delete_pipeline();
@@ -514,7 +527,9 @@ void GSCamNode::impl::restart()
     pipeline_thread_ = std::thread(
       [this]()
       {
-        RCLCPP_INFO(node_->get_logger(), "Thread running");    // NOLINT
+        if (!shutdown_signal_ && rclcpp::ok()) {
+          RCLCPP_INFO(node_->get_logger(), "Thread running");    // NOLINT
+        }
 
         // reset skipping state when (re)starting
         skip_count_ = 0;
@@ -524,7 +539,9 @@ void GSCamNode::impl::restart()
         }
 
         stop_signal_ = false;
-        RCLCPP_INFO(node_->get_logger(), "Thread stopped");    // NOLINT
+        if (!shutdown_signal_ && rclcpp::ok()) {
+          RCLCPP_INFO(node_->get_logger(), "Thread stopped");    // NOLINT
+        }
       });
   } else {
     delete_pipeline();
@@ -540,6 +557,8 @@ GSCamNode::GSCamNode(const rclcpp::NodeOptions & options)
   pImpl_(std::make_unique<GSCamNode::impl>(this))
 {
   RCLCPP_INFO(get_logger(), "use_intra_process_comms=%d", options.use_intra_process_comms());
+  on_shutdown_handle_ = get_node_base_interface()->get_context()->add_on_shutdown_callback(
+    [this]() {pImpl_->shutdown();});
 
   // Declare and get parameters, this will call validate_parameters()
 #undef CXT_MACRO_MEMBER
@@ -556,6 +575,9 @@ GSCamNode::GSCamNode(const rclcpp::NodeOptions & options)
 
 GSCamNode::~GSCamNode()
 {
+  if (auto context = get_node_base_interface()->get_context()) {
+    context->remove_on_shutdown_callback(on_shutdown_handle_);
+  }
   pImpl_.reset();
 }
 
