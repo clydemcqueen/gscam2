@@ -6,7 +6,6 @@ extern "C" {
 }
 
 #include "camera_info_manager/camera_info_manager.hpp"
-#include "ros2_shared/context_macros.hpp"
 #include "sensor_msgs/image_encodings.hpp"
 #include "sensor_msgs/msg/compressed_image.hpp"
 #include "sensor_msgs/msg/image.hpp"
@@ -18,25 +17,21 @@ namespace gscam2
 // Parameters
 //=============================================================================
 
-#define GSCAM_ALL_PARAMS \
-  CXT_MACRO_MEMBER(gst_plugin_path, std::string, "")        /* Additional plugin path  */ \
-  CXT_MACRO_MEMBER(gscam_config, std::string, "")           /* Stream config  */ \
-  CXT_MACRO_MEMBER(sync_sink, bool, true)                   /* Sync to the clock  */ \
-  CXT_MACRO_MEMBER(preroll, bool, false)                    /* Pre-fill buffers  */ \
-  CXT_MACRO_MEMBER(use_gst_timestamps, bool, false)         /* Use gst time instead of ROS time  */ \
-  CXT_MACRO_MEMBER(image_encoding, std::string, sensor_msgs::image_encodings::RGB8) /*   */ \
-  CXT_MACRO_MEMBER(camera_info_url, std::string, "")        /* Location of camera info file  */ \
-  CXT_MACRO_MEMBER(camera_name, std::string, "")            /* Camera name  */ \
-  CXT_MACRO_MEMBER(frame_id, std::string, "camera_frame")   /* Camera frame id  */ \
-  CXT_MACRO_MEMBER(skip, int64_t, 0)                        /* Skip n frames, then send 1  */ \
-  /* End of list */
-
-#undef CXT_MACRO_MEMBER
-#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_DEFINE_MEMBER(n, t, d)
-
 struct GSCamContext
 {
-  CXT_MACRO_DEFINE_MEMBERS(GSCAM_ALL_PARAMS)    // NOLINT
+  std::string gst_plugin_path_;   // Additional plugin path
+  std::string gscam_config_;      // GStreamer configuration string
+  bool sync_sink_{};              // Sync to the clock
+  bool preroll_{};                // Pre-fill buffers
+  bool use_gst_timestamps_{};     // Use gst time instead of ROS time
+  std::string image_encoding_;    // Image encoding
+  std::string camera_info_url_;   // Location of the camera info file
+  std::string camera_name_;       // Camera name
+  std::string frame_id_;          // Camera frame id
+  int64_t skip_{};                // Skip n frames, then send 1
+
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr
+    on_set_parameters_callback_handle_;
 };
 
 //=============================================================================
@@ -560,17 +555,73 @@ GSCamNode::GSCamNode(const rclcpp::NodeOptions & options)
   on_shutdown_handle_ = get_node_base_interface()->get_context()->add_on_shutdown_callback(
     [this]() {pImpl_->shutdown();});
 
-  // Declare and get parameters, this will call validate_parameters()
-#undef CXT_MACRO_MEMBER
-#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_LOAD_PARAMETER((*this), pImpl_->cxt_, n, t, d)
-  CXT_MACRO_INIT_PARAMETERS(GSCAM_ALL_PARAMS, validate_parameters)
+  // Declare and get parameters
+  pImpl_->cxt_.gst_plugin_path_ = declare_parameter("gst_plugin_path", "");
+  pImpl_->cxt_.gscam_config_ = declare_parameter("gscam_config", "");
+  pImpl_->cxt_.sync_sink_ = declare_parameter("sync_sink", true);
+  pImpl_->cxt_.preroll_ = declare_parameter("preroll", false);
+  pImpl_->cxt_.use_gst_timestamps_ = declare_parameter("use_gst_timestamps", false);
+  pImpl_->cxt_.image_encoding_ = declare_parameter("image_encoding",
+      sensor_msgs::image_encodings::RGB8);
+  pImpl_->cxt_.camera_info_url_ = declare_parameter("camera_info_url", "");
+  pImpl_->cxt_.camera_name_ = declare_parameter("camera_name", "");
+  pImpl_->cxt_.frame_id_ = declare_parameter("frame_id", "camera_frame");
+  pImpl_->cxt_.skip_ = declare_parameter("skip", 0);
 
-  // Register parameters, if they change validate_parameters() will be called again
-#undef CXT_MACRO_MEMBER
-#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_PARAMETER_CHANGED(n, t)
-  CXT_MACRO_REGISTER_PARAMETERS_CHANGED(
-    (*this), pImpl_->cxt_, GSCAM_ALL_PARAMS,
-    validate_parameters)                                                                                // NOLINT
+  validate_parameters();
+
+  // Register parameters
+  pImpl_->cxt_.on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
+    [this](const std::vector<rclcpp::Parameter> & parameters) -> rcl_interfaces::msg::
+    SetParametersResult {
+      rcl_interfaces::msg::SetParametersResult result;
+      result.successful = true;
+      bool param_set = false;
+
+      for (const auto & parameter : parameters) {
+        if (parameter.get_name() == "gst_plugin_path") {
+          pImpl_->cxt_.gst_plugin_path_ = parameter.as_string();
+          param_set = true;
+        } else if (parameter.get_name() == "gscam_config") {
+          pImpl_->cxt_.gscam_config_ = parameter.as_string();
+          param_set = true;
+        } else if (parameter.get_name() == "sync_sink") {
+          pImpl_->cxt_.sync_sink_ = parameter.as_bool();
+          param_set = true;
+        } else if (parameter.get_name() == "preroll") {
+          pImpl_->cxt_.preroll_ = parameter.as_bool();
+          param_set = true;
+        } else if (parameter.get_name() == "use_gst_timestamps") {
+          pImpl_->cxt_.use_gst_timestamps_ = parameter.as_bool();
+          param_set = true;
+        } else if (parameter.get_name() == "image_encoding") {
+          pImpl_->cxt_.image_encoding_ = parameter.as_string();
+          param_set = true;
+        } else if (parameter.get_name() == "camera_info_url") {
+          pImpl_->cxt_.camera_info_url_ = parameter.as_string();
+          param_set = true;
+        } else if (parameter.get_name() == "camera_name") {
+          pImpl_->cxt_.camera_name_ = parameter.as_string();
+          param_set = true;
+        } else if (parameter.get_name() == "frame_id") {
+          pImpl_->cxt_.frame_id_ = parameter.as_string();
+          param_set = true;
+        } else if (parameter.get_name() == "skip") {
+          pImpl_->cxt_.skip_ = parameter.as_int();
+          param_set = true;
+        }
+
+        if (param_set) {
+          RCLCPP_INFO(get_logger(), "Parameter %s value changed", parameter.get_name().c_str());
+        }
+      }
+
+      if (param_set) {
+        validate_parameters();
+      }
+      return result;
+    }
+  );
 }
 
 GSCamNode::~GSCamNode()
@@ -583,11 +634,17 @@ GSCamNode::~GSCamNode()
 
 void GSCamNode::validate_parameters()
 {
-#undef CXT_MACRO_MEMBER
-#define CXT_MACRO_MEMBER(n, t, d) CXT_MACRO_LOG_PARAMETER( \
-    RCLCPP_INFO, \
-    get_logger(), pImpl_->cxt_, n, t, d)
-  GSCAM_ALL_PARAMS
+  RCLCPP_INFO(get_logger(), "gst_plugin_path = %s", pImpl_->cxt_.gst_plugin_path_.c_str());
+  RCLCPP_INFO(get_logger(), "gscam_config = %s", pImpl_->cxt_.gscam_config_.c_str());
+  RCLCPP_INFO(get_logger(), "sync_sink = %s", pImpl_->cxt_.sync_sink_ ? "true" : "false");
+  RCLCPP_INFO(get_logger(), "preroll = %s", pImpl_->cxt_.preroll_ ? "true" : "false");
+  RCLCPP_INFO(get_logger(), "use_gst_timestamps = %s",
+      pImpl_->cxt_.use_gst_timestamps_ ? "true" : "false");
+  RCLCPP_INFO(get_logger(), "image_encoding = %s", pImpl_->cxt_.image_encoding_.c_str());
+  RCLCPP_INFO(get_logger(), "camera_info_url = %s", pImpl_->cxt_.camera_info_url_.c_str());
+  RCLCPP_INFO(get_logger(), "camera_name = %s", pImpl_->cxt_.camera_name_.c_str());
+  RCLCPP_INFO(get_logger(), "frame_id = %s", pImpl_->cxt_.frame_id_.c_str());
+  RCLCPP_INFO(get_logger(), "skip = %ld", pImpl_->cxt_.skip_);
 
   pImpl_->restart();
 }
