@@ -557,7 +557,8 @@ GSCamNode::GSCamNode(const rclcpp::NodeOptions & options)
   pImpl_(std::make_unique<GSCamNode::impl>(this))
 {
   RCLCPP_INFO(get_logger(), "use_intra_process_comms=%d", options.use_intra_process_comms());
-  rclcpp::on_shutdown([this]() {pImpl_->shutdown();});
+  on_shutdown_handle_ = get_node_base_interface()->get_context()->add_on_shutdown_callback(
+    [this]() {pImpl_->shutdown();});
 
   // Declare and get parameters, this will call validate_parameters()
 #undef CXT_MACRO_MEMBER
@@ -574,6 +575,9 @@ GSCamNode::GSCamNode(const rclcpp::NodeOptions & options)
 
 GSCamNode::~GSCamNode()
 {
+  if (auto context = get_node_base_interface()->get_context()) {
+    context->remove_on_shutdown_callback(on_shutdown_handle_);
+  }
   pImpl_.reset();
 }
 

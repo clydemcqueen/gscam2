@@ -11,6 +11,7 @@ class GSCamNode : public rclcpp::Node
   // Hide implementation
   class impl;
   std::unique_ptr<impl> pImpl_;
+  rclcpp::OnShutdownCallbackHandle on_shutdown_handle_;
 
   void validate_parameters();
 
