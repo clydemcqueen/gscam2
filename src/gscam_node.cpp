@@ -144,7 +144,7 @@ bool GSCamNode::impl::create_pipeline()
   GError * error = nullptr;
   pipeline_ = gst_parse_launch(cxt_.gscam_config_.c_str(), &error);
   if (!pipeline_) {
-    RCLCPP_FATAL(node_->get_logger(), error->message);
+    RCLCPP_FATAL(node_->get_logger(), "%s", error->message);
     return false;
   }
 
@@ -561,8 +561,9 @@ GSCamNode::GSCamNode(const rclcpp::NodeOptions & options)
   pImpl_->cxt_.sync_sink_ = declare_parameter("sync_sink", true);
   pImpl_->cxt_.preroll_ = declare_parameter("preroll", false);
   pImpl_->cxt_.use_gst_timestamps_ = declare_parameter("use_gst_timestamps", false);
-  pImpl_->cxt_.image_encoding_ = declare_parameter("image_encoding",
-      sensor_msgs::image_encodings::RGB8);
+  pImpl_->cxt_.image_encoding_ = declare_parameter(
+    "image_encoding",
+    sensor_msgs::image_encodings::RGB8);
   pImpl_->cxt_.camera_info_url_ = declare_parameter("camera_info_url", "");
   pImpl_->cxt_.camera_name_ = declare_parameter("camera_name", "");
   pImpl_->cxt_.frame_id_ = declare_parameter("frame_id", "camera_frame");
@@ -638,8 +639,9 @@ void GSCamNode::validate_parameters()
   RCLCPP_INFO(get_logger(), "gscam_config = %s", pImpl_->cxt_.gscam_config_.c_str());
   RCLCPP_INFO(get_logger(), "sync_sink = %s", pImpl_->cxt_.sync_sink_ ? "true" : "false");
   RCLCPP_INFO(get_logger(), "preroll = %s", pImpl_->cxt_.preroll_ ? "true" : "false");
-  RCLCPP_INFO(get_logger(), "use_gst_timestamps = %s",
-      pImpl_->cxt_.use_gst_timestamps_ ? "true" : "false");
+  RCLCPP_INFO(
+    get_logger(), "use_gst_timestamps = %s",
+    pImpl_->cxt_.use_gst_timestamps_ ? "true" : "false");
   RCLCPP_INFO(get_logger(), "image_encoding = %s", pImpl_->cxt_.image_encoding_.c_str());
   RCLCPP_INFO(get_logger(), "camera_info_url = %s", pImpl_->cxt_.camera_info_url_.c_str());
   RCLCPP_INFO(get_logger(), "camera_name = %s", pImpl_->cxt_.camera_name_.c_str());
