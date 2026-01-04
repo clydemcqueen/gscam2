@@ -557,7 +557,7 @@ GSCamNode::GSCamNode(const rclcpp::NodeOptions & options)
   pImpl_(std::make_unique<GSCamNode::impl>(this))
 {
   RCLCPP_INFO(get_logger(), "use_intra_process_comms=%d", options.use_intra_process_comms());
-  rclcpp::on_shutdown([this]() { pImpl_->shutdown(); });
+  rclcpp::on_shutdown([this]() {pImpl_->shutdown();});
 
   // Declare and get parameters, this will call validate_parameters()
 #undef CXT_MACRO_MEMBER
