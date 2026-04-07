@@ -169,6 +169,11 @@ bool GSCamNode::impl::create_pipeline()
       "video/x-raw",
       "format", G_TYPE_STRING, "GRAY8",
       nullptr);
+  } else if (cxt_.image_encoding_ == sensor_msgs::image_encodings::MONO16) {
+    caps = gst_caps_new_simple(
+      "video/x-raw",
+      "format", G_TYPE_STRING, "GRAY16_LE",
+      nullptr);
   } else if (cxt_.image_encoding_ == sensor_msgs::image_encodings::YUV422_YUY2) {
     caps = gst_caps_new_simple(
       "video/x-raw",
@@ -492,6 +497,7 @@ void GSCamNode::impl::restart()
 
   if (cxt_.image_encoding_ != sensor_msgs::image_encodings::RGB8 &&
     cxt_.image_encoding_ != sensor_msgs::image_encodings::MONO8 &&
+    cxt_.image_encoding_ != sensor_msgs::image_encodings::MONO16 &&
     cxt_.image_encoding_ != sensor_msgs::image_encodings::YUV422_YUY2 &&
     cxt_.image_encoding_ != sensor_msgs::image_encodings::BAYER_RGGB8 &&
     cxt_.image_encoding_ != sensor_msgs::image_encodings::BAYER_BGGR8 &&
